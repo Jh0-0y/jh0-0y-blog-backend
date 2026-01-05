@@ -37,10 +37,26 @@ public class Tag extends BaseEntity {
         this.tagGroup = tagGroup != null ? tagGroup : TagGroup.TOPIC;
     }
 
-    // 태그에 연결된 공개 게시글 수
+    /**
+     * 태그에 연결된 공개 게시글 수
+     */
     public long getPublicPostCount() {
         return posts.stream()
                 .filter(Post::isPublic)
                 .count();
+    }
+
+    /**
+     * 태그명 변경
+     */
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * 태그 그룹 변경
+     */
+    public void updateTagGroup(TagGroup tagGroup) {
+        this.tagGroup = tagGroup;
     }
 }

@@ -16,8 +16,8 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     
     // 비즈니스 예외 처리
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(CustomException e) {
         log.error("BusinessException: {}", e.getMessage());
         
         ErrorResponse response = ErrorResponse.of(

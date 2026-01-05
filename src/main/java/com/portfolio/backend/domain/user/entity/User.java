@@ -31,7 +31,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Post> posts = new ArrayList<>();
 
     @Builder
