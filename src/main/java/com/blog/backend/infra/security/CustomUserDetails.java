@@ -1,6 +1,6 @@
 package com.blog.backend.infra.security;
 
-import com.blog.backend.domain.user.entity.User;
+import com.blog.backend.feature.auth.entity.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;

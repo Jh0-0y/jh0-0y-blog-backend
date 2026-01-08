@@ -80,6 +80,8 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         // 인증 정보(쿠키, Authorization 헤더) 허용
         configuration.setAllowCredentials(true);
+        // 노출 헤더
+        configuration.setExposedHeaders(List.of("Set-Cookie"));
         // preflight 요청 캐시 시간 (초)
         configuration.setMaxAge(3600L);
 
