@@ -1,12 +1,15 @@
 package com.blog.backend.feature.post.entity;
 
-import com.blog.backend.feature.tag.entity.Tag;
+import com.blog.backend.feature.stack.entity.Stack;
 import com.blog.backend.feature.auth.entity.User;
 import com.blog.backend.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -24,10 +27,10 @@ public class Post extends BaseEntity {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private PostCategory category;
+    @Column(name = "post_type", nullable = false, length = 30)
+    private PostType postType;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 100)
     private String title;
 
     @Column(nullable = false, length = 500)
@@ -41,20 +44,28 @@ public class Post extends BaseEntity {
     @Column(nullable = false, length = 20)
     private PostStatus status;
 
+    @BatchSize(size = 100)
+    @ElementCollection
+    @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "tag")
+    @OrderColumn(name = "order_idx")
+    private List<String> tags = new ArrayList<>();
+
+    @BatchSize(size = 100)
     @ManyToMany
     @JoinTable(
-            name = "post_tag",
+            name = "post_stack",
             joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
+            inverseJoinColumns = @JoinColumn(name = "stack_id")
     )
     @OrderBy("name ASC")
-    private Set<Tag> tags = new HashSet<>();
+    private Set<Stack> stacks = new HashSet<>();
 
     // === 생성자 === //
     @Builder
-    public Post(User user, PostCategory category, String title, String excerpt, String content, PostStatus status) {
+    public Post(User user, PostType postType, String title, String excerpt, String content, PostStatus status) {
         this.user = user;
-        this.category = category;
+        this.postType = postType;
         this.title = title;
         this.excerpt = excerpt;
         this.content = content;
@@ -66,8 +77,8 @@ public class Post extends BaseEntity {
     /**
      * 게시글 수정
      */
-    public void update(PostCategory category, String title, String excerpt, String content, PostStatus status) {
-        this.category = category;
+    public void update(PostType category, String title, String excerpt, String content, PostStatus status) {
+        this.postType = category;
         this.title = title;
         this.excerpt = excerpt;
         this.content = content;
@@ -102,32 +113,24 @@ public class Post extends BaseEntity {
         return this.user.getId().equals(userId);
     }
 
-    /**
-     * 태그 추가
-     */
-    public void addTag(Tag tag) {
-        this.tags.add(tag);
-    }
-
-    /**
-     * 태그 제거
-     */
-    public void removeTag(Tag tag) {
-        this.tags.remove(tag);
-    }
-
-    /**
-     * 태그 전체 초기화
-     */
-    public void clearTags() {
-        this.tags.clear();
-    }
-
-    /**
-     * 태그 전체 교체
-     */
-    public void updateTags(Set<Tag> newTags) {
+    // === 자유 태그 / 스택 업데이트 ===
+    public void updateTags(List<String> newTags) {
         this.tags.clear();
         this.tags.addAll(newTags);
+    }
+
+    /**
+     * 스택 전체 초기화
+     */
+    public void clearStack() {
+        this.stacks.clear();
+    }
+
+    /**
+     * 스택 전체 교체
+     */
+    public void updateStacks(Set<Stack> newStacks) {
+        this.stacks.clear();
+        this.stacks.addAll(newStacks);
     }
 }

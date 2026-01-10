@@ -15,10 +15,10 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     
-    // 비즈니스 예외 처리
+    // Custom 예외 처리
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(CustomException e) {
-        log.error("BusinessException: {}", e.getMessage());
+        log.error("CustomException: {}", e.getMessage());
         
         ErrorResponse response = ErrorResponse.of(
                 e.getMessage(),

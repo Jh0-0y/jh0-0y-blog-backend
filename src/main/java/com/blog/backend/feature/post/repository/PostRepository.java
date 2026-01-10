@@ -1,10 +1,12 @@
 package com.blog.backend.feature.post.repository;
 
 import com.blog.backend.feature.post.entity.Post;
-import com.blog.backend.feature.post.entity.PostCategory;
+import com.blog.backend.feature.post.entity.PostType;
 import com.blog.backend.feature.post.entity.PostStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +15,18 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
+
+    /**
+     * 특정 제목을 가진 게시글 존재 여부 확인
+     *
+     * @param title 게시글 제목
+     * @return 존재하면 true, 없으면 false
+     */
+    boolean existsByTitle(String title);
+
+    @EntityGraph(attributePaths = {"stacks", "tags"})
+    @Override
+    Page<Post> findAll(Specification<Post> spec, Pageable pageable);
 
     /**
      * 공개된 게시글 목록 조회 (페이징)
@@ -25,38 +39,41 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     Page<Post> findByStatus(PostStatus status, Pageable pageable);
 
     /**
-     * 카테고리별 공개 게시글 목록 조회
+     * 게시글 타입 별 공개 게시글 목록 조회
      *
-     * @param category 카테고리
+     * @param postType 게시글 타입
      * @param status 게시글 상태
      * @param pageable 페이징 정보
-     * @return 해당 카테고리의 공개 게시글 페이지
+     * @return 해당 게시글 타입의 공개 게시글 페이지
      */
-    Page<Post> findByCategoryAndStatus(PostCategory category, PostStatus status, Pageable pageable);
+    Page<Post> findByPostTypeAndStatus(PostType postType, PostStatus status, Pageable pageable);
 
     /**
-     * 태그명으로 공개 게시글 목록 조회
-     * - Post와 Tag의 다대다 관계를 통해 조회
+     * 스택명으로 공개 게시글 목록 조회
+     * - Post와 Stack의 다대다 관계를 통해 조회
      *
-     * @param tagName 태그명
+     * @param stackName 스택명
      * @param status 게시글 상태
      * @param pageable 페이징 정보
-     * @return 해당 태그가 포함된 공개 게시글 페이지
+     * @return 해당 스택이 포함된 공개 게시글 페이지
      */
-    @Query("SELECT p FROM Post p JOIN p.tags t WHERE t.name = :tagName AND p.status = :status")
-    Page<Post> findByTagNameAndStatus(@Param("tagName") String tagName,
-                                      @Param("status") PostStatus status,
-                                      Pageable pageable);
+    @Query("SELECT p FROM Post p JOIN p.stacks s WHERE s.name = :stackName AND p.status = :status")
+    Page<Post> findByStackNameAndStatus(@Param("stackName") String stackName,
+                                        @Param("status") PostStatus status,
+                                        Pageable pageable);
 
     /**
-     * 게시글 상세 조회 (태그 정보 함께 로딩)
+     * 게시글 상세 조회 (스택 정보 함께 로딩)
      * - N+1 문제 방지를 위한 fetch join
      *
      * @param id 게시글 ID
-     * @return 태그가 포함된 게시글
+     * @return 스택이 포함된 게시글
      */
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.tags WHERE p.id = :id")
-    Optional<Post> findByIdWithTags(@Param("id") Long id);
+    @Query("SELECT p FROM Post p " +
+            "LEFT JOIN FETCH p.stacks " +
+            "LEFT JOIN FETCH p.tags " +
+            "WHERE p.id = :id")
+    Optional<Post> findByIdWithStacks(@Param("id") Long id);
 
     /**
      * 이전 게시글 조회 (현재 게시글보다 ID가 작은 것 중 가장 큰 것)

@@ -1,11 +1,12 @@
 package com.blog.backend.feature.post.entity;
 
+import com.blog.backend.global.error.CustomException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum PostCategory {
+public enum PostType {
 
     CORE("core", "중심"),
     ARCHITECTURE("architecture", "아키텍처"),
@@ -16,12 +17,12 @@ public enum PostCategory {
     private final String title;
 
     // 문자열로부터 enum 찾기
-    public static PostCategory fromKey(String key) {
-        for (PostCategory category : values()) {
+    public static PostType fromKey(String key) {
+        for (PostType category : values()) {
             if (category.key.equalsIgnoreCase(key)) {
                 return category;
             }
         }
-        throw new IllegalArgumentException("Unknown category: " + key);
+        throw CustomException.badRequest("유효하지 않은 게시글 타입입니다 : " + key);
     }
 }

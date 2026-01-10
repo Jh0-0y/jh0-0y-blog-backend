@@ -1,11 +1,12 @@
-package com.blog.backend.feature.tag.entity;
+package com.blog.backend.feature.stack.entity;
 
+import com.blog.backend.global.error.CustomException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum TagGroup {
+public enum StackGroup {
 
     LANGUAGE("language", "언어"),
     FRAMEWORK("framework", "프레임워크"),
@@ -18,12 +19,13 @@ public enum TagGroup {
     private final String key;
     private final String title;
 
-    public static TagGroup fromKey(String key) {
-        for (TagGroup group : values()) {
+    public static StackGroup fromKey(String key) {
+        for (StackGroup group : values()) {
             if (group.key.equalsIgnoreCase(key)) {
+                System.out.println("나여");
                 return group;
             }
         }
-        throw new IllegalArgumentException("Unknown tag group: " + key);
+        throw CustomException.badRequest("유효하지 않은 스택 그룹입니다 : " + key);
     }
 }

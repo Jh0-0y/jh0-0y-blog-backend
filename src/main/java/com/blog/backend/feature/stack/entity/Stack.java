@@ -1,4 +1,4 @@
-package com.blog.backend.feature.tag.entity;
+package com.blog.backend.feature.stack.entity;
 
 import com.blog.backend.feature.post.entity.Post;
 import com.blog.backend.global.common.BaseEntity;
@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "tags")
+@Table(name = "stacks")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Tag extends BaseEntity {
+public class Stack extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,19 +26,19 @@ public class Tag extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private TagGroup tagGroup;
+    private StackGroup stackGroup;
 
-    @ManyToMany(mappedBy = "tags")
+    @ManyToMany(mappedBy = "stacks")
     private Set<Post> posts = new HashSet<>();
 
     @Builder
-    public Tag(String name, TagGroup tagGroup) {
+    public Stack(String name, StackGroup stackGroup) {
         this.name = name;
-        this.tagGroup = tagGroup != null ? tagGroup : TagGroup.ETC;
+        this.stackGroup = stackGroup != null ? stackGroup : StackGroup.ETC;
     }
 
     /**
-     * 태그에 연결된 공개 게시글 수
+     * 스택에 연결된 공개 게시글 수
      */
     public long getPublicPostCount() {
         return posts.stream()
@@ -47,16 +47,16 @@ public class Tag extends BaseEntity {
     }
 
     /**
-     * 태그명 변경
+     * 스택명 변경
      */
     public void updateName(String name) {
         this.name = name;
     }
 
     /**
-     * 태그 그룹 변경
+     * 스택 그룹 변경
      */
-    public void updateTagGroup(TagGroup tagGroup) {
-        this.tagGroup = tagGroup;
+    public void updateStackGroup(StackGroup stackGroup) {
+        this.stackGroup = stackGroup;
     }
 }

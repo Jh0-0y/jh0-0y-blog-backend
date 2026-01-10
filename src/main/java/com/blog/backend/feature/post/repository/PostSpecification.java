@@ -2,7 +2,7 @@ package com.blog.backend.feature.post.repository;
 
 import com.blog.backend.feature.post.dto.PostSearchCondition;
 import com.blog.backend.feature.post.entity.Post;
-import com.blog.backend.feature.tag.entity.Tag;
+import com.blog.backend.feature.stack.entity.Stack;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -19,7 +19,7 @@ public class PostSpecification {
     /**
      * 복합 검색 조건으로 Specification 생성
      *
-     * @param condition 검색 조건 (category, tagName, keyword, status)
+     * @param condition 검색 조건 (post_type, stackName, keyword, status)
      * @return Specification
      */
     public static Specification<Post> withCondition(PostSearchCondition condition) {
@@ -31,15 +31,15 @@ public class PostSpecification {
                 predicates.add(cb.equal(root.get("status"), condition.getStatus()));
             }
 
-            // 카테고리 필터 (null이면 무시)
-            if (condition.getCategory() != null) {
-                predicates.add(cb.equal(root.get("category"), condition.getCategory()));
+            // 게시글 타입 필터 (null이면 무시)
+            if (condition.getPostType() != null) {
+                predicates.add(cb.equal(root.get("postType"), condition.getPostType()));
             }
 
-            // 태그 필터 (null이면 무시)
-            if (condition.getTagName() != null && !condition.getTagName().isBlank()) {
-                Join<Post, Tag> tagJoin = root.join("tags", JoinType.INNER);
-                predicates.add(cb.equal(tagJoin.get("name"), condition.getTagName()));
+            // 스택 필터 (null이면 무시)
+            if (condition.getStackName() != null && !condition.getStackName().isBlank()) {
+                Join<Post, Stack> stackJoin = root.join("stacks", JoinType.INNER);
+                predicates.add(cb.equal(stackJoin.get("name"), condition.getStackName()));
             }
 
             // 키워드 검색 (null이면 무시) - 제목, 내용, 요약에서 검색
@@ -79,14 +79,14 @@ public class PostSpecification {
             }
 
             // 카테고리 필터
-            if (condition.getCategory() != null) {
-                predicates.add(cb.equal(root.get("category"), condition.getCategory()));
+            if (condition.getPostType() != null) {
+                predicates.add(cb.equal(root.get("postType"), condition.getPostType()));
             }
 
             // 태그 필터
-            if (condition.getTagName() != null && !condition.getTagName().isBlank()) {
-                Join<Post, Tag> tagJoin = root.join("tags", JoinType.INNER);
-                predicates.add(cb.equal(tagJoin.get("name"), condition.getTagName()));
+            if (condition.getStackName() != null && !condition.getStackName().isBlank()) {
+                Join<Post, Stack> stackJoin = root.join("stacks", JoinType.INNER);
+                predicates.add(cb.equal(stackJoin.get("name"), condition.getStackName()));
             }
 
             // 키워드 검색

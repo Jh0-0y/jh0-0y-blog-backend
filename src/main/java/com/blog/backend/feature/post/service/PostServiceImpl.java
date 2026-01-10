@@ -1,14 +1,15 @@
 package com.blog.backend.feature.post.service;
 
-import com.blog.backend.feature.post.dto.PostDto;
+import com.blog.backend.feature.post.dto.PostRequest;
+import com.blog.backend.feature.post.dto.PostResponse;
 import com.blog.backend.feature.post.dto.PostSearchCondition;
 import com.blog.backend.feature.post.entity.Post;
-import com.blog.backend.feature.post.entity.PostCategory;
+import com.blog.backend.feature.post.entity.PostType;
 import com.blog.backend.feature.post.entity.PostStatus;
 import com.blog.backend.feature.post.repository.PostRepository;
 import com.blog.backend.feature.post.repository.PostSpecification;
-import com.blog.backend.feature.tag.entity.Tag;
-import com.blog.backend.feature.tag.repository.TagRepository;
+import com.blog.backend.feature.stack.entity.Stack;
+import com.blog.backend.feature.stack.repository.StackRepository;
 import com.blog.backend.feature.auth.entity.User;
 import com.blog.backend.feature.auth.repository.UserRepository;
 import com.blog.backend.global.error.CustomException;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,53 +29,67 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final TagRepository tagRepository;
+    private final StackRepository stackRepository;
 
     // ========== CRUD ========== //
 
     @Override
     @Transactional
-    public PostDto.DetailResponse createPost(Long userId, PostDto.CreateRequest request) {
+    public PostResponse.Detail createPost(Long userId, PostRequest.Create request) {
         User user = findUserById(userId);
+        existsByTitle(request.getTitle());
 
         Post post = Post.builder()
                 .user(user)
-                .category(request.getCategory())
+                .postType(request.getPostType())
                 .title(request.getTitle())
                 .excerpt(request.getExcerpt())
                 .content(request.getContent())
                 .status(request.getStatus() != null ? request.getStatus() : PostStatus.PRIVATE)
                 .build();
 
+        // 자유 태그 처리
         if (request.getTags() != null && !request.getTags().isEmpty()) {
-            Set<Tag> tags = getOrCreateTags(request.getTags());
-            post.updateTags(tags);
+            post.updateTags(request.getTags());
+        }
+
+        // 기술 스택 처리 (ID 기반 선택만)
+        if (request.getStacks() != null && !request.getStacks().isEmpty()) {
+            List<Stack> stacks = stackRepository.findByNameIn(request.getStacks());
+            post.updateStacks(new HashSet<>(stacks));
         }
 
         Post savedPost = postRepository.save(post);
-        return PostDto.DetailResponse.from(savedPost, null, null);
+        return PostResponse.Detail.from(savedPost, null, null);
     }
 
     @Override
     @Transactional
-    public PostDto.DetailResponse updatePost(Long userId, Long postId, PostDto.UpdateRequest request) {
+    public PostResponse.Detail updatePost(Long userId, Long postId, PostRequest.Update request) {
         Post post = findPostById(postId);
         validateAuthor(post, userId);
+        existsByTitle(request.getTitle());
 
         post.update(
-                request.getCategory(),
+                request.getPostType(),
                 request.getTitle(),
                 request.getExcerpt(),
                 request.getContent(),
                 request.getStatus()
         );
 
-        if (request.getTags() != null) {
-            Set<Tag> tags = getOrCreateTags(request.getTags());
-            post.updateTags(tags);
+        // 자유 태그 처리
+        if (request.getTags() != null && !request.getTags().isEmpty()) {
+            post.updateTags(request.getTags());
         }
 
-        return PostDto.DetailResponse.from(post, null, null);
+        // 기술 스택 처리 (ID 기반 선택만)
+        if (request.getStacks() != null && !request.getStacks().isEmpty()) {
+            List<Stack> stacks = stackRepository.findByNameIn(request.getStacks());
+            post.updateStacks(new HashSet<>(stacks));
+        }
+
+        return PostResponse.Detail.from(post, null, null);
     }
 
     @Override
@@ -83,68 +98,68 @@ public class PostServiceImpl implements PostService {
         Post post = findPostById(postId);
         validateAuthor(post, userId);
 
-        post.clearTags();
+        post.clearStack();
         postRepository.delete(post);
     }
 
     @Override
-    public PostDto.DetailResponse getPost(Long postId) {
-        Post post = postRepository.findByIdWithTags(postId)
+    public PostResponse.Detail getPost(Long postId) {
+        Post post = postRepository.findByIdWithStacks(postId)
                 .orElseThrow(() -> CustomException.notFound("게시글을 찾을 수 없습니다"));
 
         Post prevPost = postRepository.findPreviousPost(postId, PostStatus.PUBLIC).orElse(null);
         Post nextPost = postRepository.findNextPost(postId, PostStatus.PUBLIC).orElse(null);
 
-        return PostDto.DetailResponse.from(post, prevPost, nextPost);
+        return PostResponse.Detail.from(post, prevPost, nextPost);
     }
 
     // ========== 복합 필터링 (신규) ========== //
 
     @Override
-    public Page<PostDto.ListResponse> searchPosts(PostSearchCondition condition, Pageable pageable) {
+    public Page<PostResponse.PostItems> searchPosts(PostSearchCondition condition, Pageable pageable) {
         return postRepository.findAll(PostSpecification.withCondition(condition), pageable)
-                .map(PostDto.ListResponse::from);
+                .map(PostResponse.PostItems::from);
     }
 
     @Override
-    public Page<PostDto.ListResponse> searchMyPosts(Long userId, PostSearchCondition condition, Pageable pageable) {
+    public Page<PostResponse.PostItems> searchMyPosts(Long userId, PostSearchCondition condition, Pageable pageable) {
         return postRepository.findAll(PostSpecification.withUserAndCondition(userId, condition), pageable)
-                .map(PostDto.ListResponse::from);
+                .map(PostResponse.PostItems::from);
     }
 
     // ========== 기존 메서드 (하위 호환) ========== //
 
     @Override
     @Deprecated
-    public Page<PostDto.ListResponse> getPublicPosts(Pageable pageable) {
+    public Page<PostResponse.PostItems> getPublicPosts(Pageable pageable) {
         PostSearchCondition condition = PostSearchCondition.ofPublic(null, null, null);
         return searchPosts(condition, pageable);
     }
 
     @Override
     @Deprecated
-    public Page<PostDto.ListResponse> getPostsByCategory(PostCategory category, Pageable pageable) {
-        PostSearchCondition condition = PostSearchCondition.ofPublic(category, null, null);
+    public Page<PostResponse.PostItems> getPostsByPostType(PostType postType, Pageable pageable) {
+        PostSearchCondition condition = PostSearchCondition.ofPublic(postType, null, null);
         return searchPosts(condition, pageable);
     }
 
     @Override
     @Deprecated
-    public Page<PostDto.ListResponse> getPostsByTag(String tagName, Pageable pageable) {
+    public Page<PostResponse.PostItems> getPostsByTag(String tagName, Pageable pageable) {
         PostSearchCondition condition = PostSearchCondition.ofPublic(null, tagName, null);
         return searchPosts(condition, pageable);
     }
 
     @Override
     @Deprecated
-    public Page<PostDto.ListResponse> searchPosts(String keyword, Pageable pageable) {
+    public Page<PostResponse.PostItems> searchPosts(String keyword, Pageable pageable) {
         PostSearchCondition condition = PostSearchCondition.ofPublic(null, null, keyword);
         return searchPosts(condition, pageable);
     }
 
     @Override
     @Deprecated
-    public Page<PostDto.ListResponse> getMyPosts(Long userId, Pageable pageable) {
+    public Page<PostResponse.PostItems> getMyPosts(Long userId, Pageable pageable) {
         PostSearchCondition condition = PostSearchCondition.ofMine(null, null, null);
         return searchMyPosts(userId, condition, pageable);
     }
@@ -160,6 +175,11 @@ public class PostServiceImpl implements PostService {
         return postRepository.findById(postId)
                 .orElseThrow(() -> CustomException.notFound("게시글을 찾을 수 없습니다"));
     }
+    private void existsByTitle(String title) {
+        if (postRepository.existsByTitle(title)) {
+            throw CustomException.conflict("이미 존재하는 제목입니다.");
+        }
+    }
 
     private void validateAuthor(Post post, Long userId) {
         if (!post.isWrittenBy(userId)) {
@@ -167,19 +187,4 @@ public class PostServiceImpl implements PostService {
         }
     }
 
-    private Set<Tag> getOrCreateTags(Set<String> tagNames) {
-        Set<Tag> tags = new HashSet<>();
-
-        for (String tagName : tagNames) {
-            Tag tag = tagRepository.findByName(tagName)
-                    .orElseGet(() -> tagRepository.save(
-                            Tag.builder()
-                                    .name(tagName)
-                                    .build()
-                    ));
-            tags.add(tag);
-        }
-
-        return tags;
-    }
 }
