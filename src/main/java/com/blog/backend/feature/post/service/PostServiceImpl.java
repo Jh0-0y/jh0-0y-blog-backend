@@ -68,7 +68,11 @@ public class PostServiceImpl implements PostService {
     public PostResponse.Detail updatePost(Long userId, Long postId, PostRequest.Update request) {
         Post post = findPostById(postId);
         validateAuthor(post, userId);
-        existsByTitle(request.getTitle());
+
+        // 제목이 변경된 경우에만 중복 체크 (자기 자신 제외)
+        if (!post.getTitle().equals(request.getTitle())) {
+            existsByTitle(request.getTitle());
+        }
 
         post.update(
                 request.getPostType(),

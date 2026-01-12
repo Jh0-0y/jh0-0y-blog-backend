@@ -25,11 +25,11 @@ public class PostRequest {
     public static class Create {
 
         @NotBlank(message = "제목을 입력해주세요")
-        @Size(max = 100, message = "제목은 100자 이내로 입력해주세요")
+        @Size(max = 50, message = "제목은 50자 이내로 입력해주세요")
         private String title;
 
         @NotBlank(message = "요약을 입력해주세요")
-        @Size(max = 500, message = "요약은 500자 이내로 입력해주세요")
+        @Size(max = 200, message = "요약은 200자 이내로 입력해주세요")
         private String excerpt;
 
         @NotNull(message = "타입을 선택해주세요")
@@ -55,17 +55,18 @@ public class PostRequest {
     public static class Update {
 
         @NotBlank(message = "제목을 입력해주세요")
-        @Size(max = 100, message = "제목은 100자 이내로 입력해주세요")
+        @Size(max = 50, message = "제목은 50자 이내로 입력해주세요")
         private String title;
 
         @NotBlank(message = "요약을 입력해주세요")
-        @Size(max = 500, message = "요약은 500자 이내로 입력해주세요")
+        @Size(max = 200, message = "요약은 200자 이내로 입력해주세요")
         private String excerpt;
 
         @NotNull(message = "타입을 선택해주세요")
         private PostType postType;
 
         @NotBlank(message = "내용을 입력해주세요")
+        @Size(max = 5000, message = "본문은 5000자 이내로 입력해주세요")
         private String content;
 
         private PostStatus status;

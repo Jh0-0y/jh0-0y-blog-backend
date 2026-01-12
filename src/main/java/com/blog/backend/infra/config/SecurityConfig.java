@@ -1,6 +1,7 @@
 package com.blog.backend.infra.config;
 
 import com.blog.backend.infra.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,22 +40,39 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 // CORS 설정 적용
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 세션 사용 안 함 (JWT 기반 인증 사용 예정)
+                // 세션 사용 안 함 (JWT 기반 인증 사용)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // 인증 실패 시 401 응답 처리
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"success\": false, \"error\": {\"code\": \"UNAUTHORIZED\", \"message\": \"인증이 필요합니다. 로그인 후 다시 시도해주세요.\"}}"
+                            );
+                        })
+                        // 권한 부족 시 403 응답 처리 (인증은 됐지만 권한 없음)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"success\": false, \"error\": {\"code\": \"FORBIDDEN\", \"message\": \"접근 권한이 없습니다.\"}}"
+                            );
+                        })
+                )
                 // URL별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers("/api/auth/**").permitAll()           // 로그인, 회원가입
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()  // 게시글 조회
-                        .requestMatchers(HttpMethod.GET, "/api/tags/**").permitAll()   // 태그 조회
+                        .requestMatchers(HttpMethod.GET, "/api/stacks/**").permitAll()   // 스택 조회
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 추가
-                // UsernamePasswordAuthenticationFilter: 폼 로그인 처리 필터
-                // JWT 필터가 먼저 실행되어 토큰 기반 인증 처리
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
