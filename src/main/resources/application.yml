@@ -25,7 +25,7 @@ spring:
         show-sql: false
         hibernate:
             # create, create-drop, update, validate, none
-            ddl-auto: update
+            ddl-auto: node
         properties:
             hibernate:
                 format_sql: true
