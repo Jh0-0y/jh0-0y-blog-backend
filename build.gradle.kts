@@ -57,6 +57,9 @@ dependencies {
 	// 테스트에서도 Lombok 사용
 	testCompileOnly("org.projectlombok:lombok")
 	testAnnotationProcessor("org.projectlombok:lombok")
+
+	// ========== AWS S3 ========== //
+//	implementation("io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.0")
 }
 
 tasks.withType<Test> {

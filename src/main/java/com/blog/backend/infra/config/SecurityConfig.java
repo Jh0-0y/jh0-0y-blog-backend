@@ -3,6 +3,7 @@ package com.blog.backend.infra.config;
 import com.blog.backend.infra.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,6 +29,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${app.origin.frontend}")
+    private String frontOrigin;
 
     /**
      * Security Filter Chain 설정
@@ -87,6 +91,7 @@ public class SecurityConfig {
 
         // 허용할 Origin (프론트엔드 주소)
         configuration.setAllowedOrigins(List.of(
+                frontOrigin,                // frontend origin
                 "http://localhost:5173",    // Vite 개발 서버
                 "http://localhost:3000"     // 기타 개발 서버
         ));

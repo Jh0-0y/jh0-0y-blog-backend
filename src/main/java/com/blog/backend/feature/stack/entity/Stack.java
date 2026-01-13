@@ -1,7 +1,7 @@
 package com.blog.backend.feature.stack.entity;
 
 import com.blog.backend.feature.post.entity.Post;
-import com.blog.backend.global.common.BaseEntity;
+import com.blog.backend.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -15,7 +15,7 @@ import java.util.Set;
 @Table(name = "stacks")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Stack extends BaseEntity {
+public class Stack extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

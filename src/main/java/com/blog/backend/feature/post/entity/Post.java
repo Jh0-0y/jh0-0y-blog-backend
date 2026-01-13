@@ -2,7 +2,7 @@ package com.blog.backend.feature.post.entity;
 
 import com.blog.backend.feature.stack.entity.Stack;
 import com.blog.backend.feature.auth.entity.User;
-import com.blog.backend.global.common.BaseEntity;
+import com.blog.backend.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
@@ -16,7 +16,7 @@ import java.util.Set;
 @Table(name = "posts")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Post extends BaseEntity {
+public class Post extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

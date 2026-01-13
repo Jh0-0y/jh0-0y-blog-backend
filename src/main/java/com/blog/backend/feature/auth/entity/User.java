@@ -1,7 +1,7 @@
 package com.blog.backend.feature.auth.entity;
 
 import com.blog.backend.feature.post.entity.Post;
-import com.blog.backend.global.common.BaseEntity;
+import com.blog.backend.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +12,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity {
+public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

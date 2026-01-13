@@ -13,6 +13,7 @@ public enum StackGroup {
     LIBRARY("library","라이브러리"),
     DATABASE("database", "데이터베이스"),
     DEVOPS("devops", "데브옵스"),
+    KNOWLEDGE("knowledge", "지식"),
     TOOL("tool", "툴"),
     ETC("etc", "기타");
 
