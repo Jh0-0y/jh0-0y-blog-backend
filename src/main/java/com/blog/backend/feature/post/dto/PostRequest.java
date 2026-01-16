@@ -43,6 +43,14 @@ public class PostRequest {
         private List<String> tags;
 
         private Set<String> stacks;
+
+        /**
+         * 에디터에서 업로드한 파일 ID 목록
+         * - 에디터 드래그 시 즉시 업로드된 파일들의 ID
+         * - 게시글 저장 시점에 postId와 연결됨
+         * - null 또는 빈 리스트일 경우 파일 연결 생략
+         */
+        private List<Long> fileIds;
     }
 
     /**
@@ -74,6 +82,21 @@ public class PostRequest {
         private List<String> tags;
 
         private Set<String> stacks;
-    }
 
+        /**
+         * 새로 추가된 파일 ID 목록
+         * - 수정 시 새롭게 업로드된 파일들의 ID
+         * - 기존 파일은 그대로 유지됨
+         * - null 또는 빈 리스트일 경우 새 파일 연결 생략
+         */
+        private List<Long> fileIds;
+
+        /**
+         * 삭제할 파일 ID 목록 (선택사항)
+         * - 수정 시 제거하고 싶은 파일들의 ID
+         * - 구현 시 PostServiceImpl에서 처리 로직 추가 필요
+         * - null 또는 빈 리스트일 경우 파일 삭제 생략
+         */
+        private List<Long> deletedFileIds;
+    }
 }

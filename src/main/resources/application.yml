@@ -36,6 +36,18 @@ spring:
         # JPA Performance Optimization
         open-in-view: false
 
+    # 스케줄러 활성화 (고아 파일 정리용)
+    task:
+        scheduling:
+            enabled: true
+
+    # 파일 업로드 설정
+    servlet:
+        multipart:
+            enabled: true
+            max-file-size: 100MB      # 단일 파일 최대 크기
+            max-request-size: 100MB   # 전체 요청 최대 크기
+
 # Server Port
 server:
     port: 8080
@@ -43,6 +55,10 @@ server:
 # SQL Logging
 logging:
     level:
+        # 파일 업로드 관련 로그
+        com.blog.backend.feature.file: DEBUG
+        com.blog.backend.infra.s3: DEBUG
+        software.amazon.awssdk: INFO
         org:
             hibernate:
                 SQL: ERROR
@@ -68,19 +84,10 @@ jwt:
 
 cloud:
     aws:
-        s3:
-            bucket: ${AWS_BUCKET}
-        region:
-            static: ap-northeast-2
         credentials:
             access-key: ${AWS_ACCESS_KEY}
             secret-key: ${AWS_SECRET_KEY}
-        stack:
-            auto: false
-
-# image upload
-image:
-    upload:
-        max-size: 10485760  # 10MB
-        allowed-extensions: jpg,jpeg,png,gif,webp
-        path-prefix: blog/images
+        region:
+            static: ap-northeast-2
+        s3:
+            bucket: ${AWS_BUCKET}
