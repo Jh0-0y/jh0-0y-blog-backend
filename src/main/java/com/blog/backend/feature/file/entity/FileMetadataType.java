@@ -38,7 +38,7 @@ public enum FileMetadataType {
         }
 
         return switch (this) {
-            case THUMBNAIL -> "thumbnail_" + identifier + extension;
+            case THUMBNAIL -> "thumbnail_" + identifier + extension;  // thumbnail_{postId}.jpg
             case PROFILE_IMAGE -> "profile_" + identifier + extension;
             default -> java.util.UUID.randomUUID().toString() + extension;
         };

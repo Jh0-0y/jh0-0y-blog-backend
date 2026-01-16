@@ -1,6 +1,7 @@
 package com.blog.backend.feature.auth.service;
 
-import com.blog.backend.feature.auth.dto.AuthDto;
+import com.blog.backend.feature.auth.dto.AuthRequest;
+import com.blog.backend.feature.auth.dto.AuthResponse;
 import com.blog.backend.feature.auth.entity.User;
 import com.blog.backend.feature.auth.entity.UserRole;
 import com.blog.backend.feature.auth.repository.UserRepository;
@@ -20,7 +21,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public User signUp(AuthDto.SignUpRequest request) {
+    public User signUp(AuthRequest.SignUpRequest request) {
         // 이메일 중복 검사
         validateDuplicateEmail(request.getEmail());
 
@@ -39,7 +40,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User login(AuthDto.LoginRequest request) {
+    public User login(AuthRequest.LoginRequest request) {
         // 이메일로 사용자 조회
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> CustomException.unauthorized("이메일 또는 비밀번호가 일치하지 않습니다"));
@@ -59,11 +60,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthDto.UserInfoResponse getMe(Long userId) {
+    public AuthResponse.UserInfoResponse getMe(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> CustomException.notFound("사용자를 찾을 수 없습니다"));
 
-        return AuthDto.UserInfoResponse.from(user);
+        return AuthResponse.UserInfoResponse.from(user);
     }
 
     // ========== Private Methods ========== //

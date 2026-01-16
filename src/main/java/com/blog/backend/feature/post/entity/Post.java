@@ -44,6 +44,15 @@ public class Post extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private PostStatus status;
 
+    /**
+     * 썸네일 URL (Denormalization - 조회 성능 최적화)
+     * - PostFile 테이블에도 매핑 정보 저장 (파일 추적용)
+     * - URL은 빠른 조회를 위해 중복 저장
+     * - null 허용 (썸네일 없는 게시글 가능)
+     */
+    @Column(name = "thumbnail_url", length = 1000)
+    private String thumbnailUrl;
+
     @BatchSize(size = 100)
     @ElementCollection
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
@@ -63,13 +72,15 @@ public class Post extends BaseTimeEntity {
 
     // === 생성자 === //
     @Builder
-    public Post(User user, PostType postType, String title, String excerpt, String content, PostStatus status) {
+    public Post(User user, PostType postType, String title, String excerpt,
+                String content, PostStatus status, String thumbnailUrl) {
         this.user = user;
         this.postType = postType;
         this.title = title;
         this.excerpt = excerpt;
         this.content = content;
         this.status = status != null ? status : PostStatus.PRIVATE;
+        this.thumbnailUrl = thumbnailUrl;
     }
 
     // === 비즈니스 로직 === //
@@ -132,5 +143,28 @@ public class Post extends BaseTimeEntity {
     public void updateStacks(Set<Stack> newStacks) {
         this.stacks.clear();
         this.stacks.addAll(newStacks);
+    }
+
+    // === 썸네일 관리 === //
+
+    /**
+     * 썸네일 URL 업데이트
+     */
+    public void updateThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
+    /**
+     * 썸네일 제거
+     */
+    public void removeThumbnail() {
+        this.thumbnailUrl = null;
+    }
+
+    /**
+     * 썸네일 존재 여부 확인
+     */
+    public boolean hasThumbnail() {
+        return this.thumbnailUrl != null && !this.thumbnailUrl.isBlank();
     }
 }

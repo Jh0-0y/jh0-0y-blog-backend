@@ -3,7 +3,7 @@ package com.blog.backend.feature.auth.controller;
 import com.blog.backend.feature.auth.service.AuthService;
 import com.blog.backend.global.common.ApiResponse;
 import com.blog.backend.infra.security.CustomUserDetails;
-import com.blog.backend.feature.auth.dto.AuthDto;
+import com.blog.backend.feature.auth.dto.AuthResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,10 +23,10 @@ public class MeController {
      * GET /api/me
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<AuthDto.UserInfoResponse>> getMe(
+    public ResponseEntity<ApiResponse<AuthResponse.UserInfoResponse>> getMe(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        AuthDto.UserInfoResponse response = authService.getMe(userDetails.getUserId());
+        AuthResponse.UserInfoResponse response = authService.getMe(userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

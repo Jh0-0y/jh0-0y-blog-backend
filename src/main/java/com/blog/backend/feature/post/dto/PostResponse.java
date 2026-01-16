@@ -25,6 +25,7 @@ public class PostResponse {
         private String excerpt;
         private PostType postType;
         private PostStatus status;
+        private String thumbnailUrl;  // 썸네일 URL 추가
         private List<String> tags;
         private List<String> stacks;
         private LocalDateTime createdAt;
@@ -36,6 +37,7 @@ public class PostResponse {
                     .excerpt(post.getExcerpt())
                     .postType(post.getPostType())
                     .status(post.getStatus())
+                    .thumbnailUrl(post.getThumbnailUrl())  // 썸네일 URL
                     .tags(post.getTags())
                     .stacks(post.getStacks().stream()
                             .map(Stack::getName)
@@ -58,6 +60,7 @@ public class PostResponse {
         private PostType postType;
         private String content;
         private PostStatus status;
+        private String thumbnailUrl;  // 썸네일 URL 추가
         private List<String> tags;
         private List<String> stacks;
         private Adjacent prev;
@@ -73,6 +76,7 @@ public class PostResponse {
                     .postType(post.getPostType())
                     .content(post.getContent())
                     .status(post.getStatus())
+                    .thumbnailUrl(post.getThumbnailUrl())  // 썸네일 URL
                     .tags(post.getTags())
                     .stacks(post.getStacks().stream()
                             .map(Stack::getName)

@@ -15,9 +15,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -29,31 +31,48 @@ public class PostController {
     // ========== CRUD ========== //
 
     /**
-     * 게시글 생성
+     * 게시글 생성 (Multipart 지원)
      * POST /api/posts
+     *
+     * @param data 게시글 데이터 (JSON)
+     * @param thumbnail 썸네일 이미지 파일 (선택)
      */
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<PostResponse.Detail>> createPost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody PostRequest.Create request
+            @RequestPart("data") @Valid PostRequest.Create request,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail
     ) {
-        PostResponse.Detail response = postService.createPost(userDetails.getUserId(), request);
+        PostResponse.Detail response = postService.createPost(
+                userDetails.getUserId(),
+                request,
+                thumbnail
+        );
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "게시글이 생성되었습니다"));
     }
 
     /**
-     * 게시글 수정
+     * 게시글 수정 (Multipart 지원)
      * PUT /api/posts/{postId}
+     *
+     * @param data 게시글 데이터 (JSON)
+     * @param thumbnail 새 썸네일 이미지 파일 (선택)
      */
-    @PutMapping("/{postId}")
+    @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<PostResponse.Detail>> updatePost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long postId,
-            @Valid @RequestBody PostRequest.Update request
+            @RequestPart("data") @Valid PostRequest.Update request,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail
     ) {
-        PostResponse.Detail response = postService.updatePost(userDetails.getUserId(), postId, request);
+        PostResponse.Detail response = postService.updatePost(
+                userDetails.getUserId(),
+                postId,
+                request,
+                thumbnail
+        );
         return ResponseEntity.ok(ApiResponse.success(response, "게시글이 수정되었습니다"));
     }
 
@@ -86,19 +105,6 @@ public class PostController {
 
     /**
      * 공개 게시글 검색 (복합 필터링)
-     *
-     * GET /api/posts
-     * GET /api/posts?postType=CORE
-     * GET /api/posts?stack=Spring
-     * GET /api/posts?keyword=JPA
-     * GET /api/posts?postType=CORE&stack=Spring
-     * GET /api/posts?postType=CORE&stack=Spring&keyword=JPA
-     *
-     * @param postType 게시글 타입 (optional)
-     * @param stack 스택명 (optional)
-     * @param keyword 검색 키워드 (optional)
-     * @param pageable 페이징 정보
-     * @return 검색 결과 페이지
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> searchPosts(
@@ -114,18 +120,6 @@ public class PostController {
 
     /**
      * 내 게시글 검색 (복합 필터링)
-     *
-     * GET /api/posts/my
-     * GET /api/posts/my?postType=CORE
-     * GET /api/posts/my?stack=Spring
-     * GET /api/posts/my?postType=CORE&stack=Spring&keyword=JPA
-     *
-     * @param userDetails 인증된 사용자 정보
-     * @param postType 게시글 타입 (optional)
-     * @param stack 스택명 (optional)
-     * @param keyword 검색 키워드 (optional)
-     * @param pageable 페이징 정보
-     * @return 검색 결과 페이지
      */
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> searchMyPosts(
@@ -139,12 +133,8 @@ public class PostController {
         Page<PostResponse.PostItems> posts = postService.searchMyPosts(userDetails.getUserId(), condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(posts)));
     }
+// ========== 기존 API (하위 호환, Deprecated) ========== //
 
-    // ========== 기존 API (하위 호환, Deprecated) ========== //
-
-    /**
-     * @deprecated Use GET /api/posts?postType={postType} instead
-     */
     @Deprecated
     @GetMapping("/postType/{postType}")
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> getPostsByCategory(
@@ -156,9 +146,6 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(posts)));
     }
 
-    /**
-     * @deprecated Use GET /api/posts?stack={stackName} instead
-     */
     @Deprecated
     @GetMapping("/stack/{stackName}")
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> getPostsByTag(
@@ -170,9 +157,6 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(posts)));
     }
 
-    /**
-     * @deprecated Use GET /api/posts?keyword={keyword} instead
-     */
     @Deprecated
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> searchPostsByKeyword(

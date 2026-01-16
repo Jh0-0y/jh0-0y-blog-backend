@@ -1,7 +1,8 @@
 package com.blog.backend.feature.auth.service;
 
+import com.blog.backend.feature.auth.dto.AuthRequest;
 import com.blog.backend.feature.auth.entity.User;
-import com.blog.backend.feature.auth.dto.AuthDto;
+import com.blog.backend.feature.auth.dto.AuthResponse;
 import com.blog.backend.global.error.CustomException;
 
 public interface AuthService {
@@ -13,7 +14,7 @@ public interface AuthService {
      * @throws CustomException 이메일이 이미 존재하는 경우 (CONFLICT)
      * @throws CustomException 닉네임이 이미 존재하는 경우 (CONFLICT)
      */
-    User signUp(AuthDto.SignUpRequest request);
+    User signUp(AuthRequest.SignUpRequest request);
 
     /**
      * 로그인
@@ -22,7 +23,7 @@ public interface AuthService {
      * @throws CustomException 사용자를 찾을 수 없는 경우 (UNAUTHORIZED)
      * @throws CustomException 비밀번호가 일치하지 않는 경우 (UNAUTHORIZED)
      */
-    User login(AuthDto.LoginRequest request);
+    User login(AuthRequest.LoginRequest request);
 
     /**
      * 토큰 재발급을 위한 사용자 조회
@@ -38,5 +39,21 @@ public interface AuthService {
      * @return 사용자 정보
      * @throws CustomException 사용자를 찾을 수 없는 경우 (NOT_FOUND)
      */
-    AuthDto.UserInfoResponse getMe(Long userId);
+    AuthResponse.UserInfoResponse getMe(Long userId);
+
+    /**
+     * 프로필 정보 수정 (닉네임 및/또는 프로필 이미지)
+     * @param userId 사용자 ID
+     * @param request 프로필 수정 요청 DTO (닉네임, 선택적)
+     * @param profileImage 프로필 이미지 파일 (선택적)
+     * @return 수정된 사용자 정보
+     * @throws CustomException 사용자를 찾을 수 없는 경우 (NOT_FOUND)
+     * @throws CustomException 닉네임이 이미 존재하는 경우 (CONFLICT)
+     * @throws CustomException 파일 업로드 실패 시 (INTERNAL_SERVER_ERROR)
+     */
+    AuthResponse.UserInfoResponse updateProfile(
+            Long userId,
+            AuthRequest.UpdateProfileRequest request,
+            org.springframework.web.multipart.MultipartFile profileImage
+    ) throws java.io.IOException;
 }

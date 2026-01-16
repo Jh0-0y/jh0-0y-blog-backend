@@ -1,7 +1,5 @@
 package com.blog.backend.feature.auth.dto;
 
-import com.blog.backend.feature.auth.entity.User;
-import com.blog.backend.feature.auth.entity.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -10,9 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-public class AuthDto {
-
-    // ========== Request ========== //
+public class AuthRequest {
 
     /**
      * 회원가입 요청
@@ -53,45 +49,16 @@ public class AuthDto {
         private String password;
     }
 
-    // ========== Response ========== //
-
     /**
-     * 로그인/회원가입 응답
-     * - 토큰은 HttpOnly 쿠키로 전달
-     * - 응답 body에는 사용자 정보만 포함
+     * 프로필 수정 요청
      */
     @Getter
     @Builder
-    public static class LoginResponse {
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateProfileRequest {
 
-        private UserInfoResponse user;
-
-        public static LoginResponse from(User user) {
-            return LoginResponse.builder()
-                    .user(UserInfoResponse.from(user))
-                    .build();
-        }
-    }
-
-    /**
-     * 사용자 정보 응답
-     */
-    @Getter
-    @Builder
-    public static class UserInfoResponse {
-
-        private Long id;
-        private String email;
+        @Size(min = 2, max = 20, message = "닉네임은 2~20자로 입력해주세요")
         private String nickname;
-        private UserRole role;
-
-        public static UserInfoResponse from(User user) {
-            return UserInfoResponse.builder()
-                    .id(user.getId())
-                    .email(user.getEmail())
-                    .nickname(user.getNickname())
-                    .role(user.getRole())
-                    .build();
-        }
     }
 }

@@ -31,6 +31,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
+    @Column(length = 1000)
+    private String profileImageUrl;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Post> posts = new ArrayList<>();
 
@@ -48,5 +51,9 @@ public class User extends BaseTimeEntity {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }
