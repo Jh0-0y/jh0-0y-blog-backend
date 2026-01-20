@@ -47,7 +47,6 @@ public class PostSpecification {
                 String pattern = "%" + condition.getKeyword() + "%";
                 predicates.add(cb.or(
                         cb.like(root.get("title"), pattern),
-                        cb.like(root.get("content"), pattern),
                         cb.like(root.get("excerpt"), pattern)
                 ));
             }

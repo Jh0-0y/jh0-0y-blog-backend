@@ -48,17 +48,4 @@ public class AuthRequest {
         @NotBlank(message = "비밀번호를 입력해주세요")
         private String password;
     }
-
-    /**
-     * 프로필 수정 요청
-     */
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class UpdateProfileRequest {
-
-        @Size(min = 2, max = 20, message = "닉네임은 2~20자로 입력해주세요")
-        private String nickname;
-    }
 }

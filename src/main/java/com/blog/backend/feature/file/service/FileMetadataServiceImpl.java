@@ -2,7 +2,9 @@ package com.blog.backend.feature.file.service;
 
 import com.blog.backend.feature.file.dto.UploadResponse;
 import com.blog.backend.feature.file.entity.FileMetadata;
+import com.blog.backend.feature.file.entity.FileMetadataType;
 import com.blog.backend.feature.file.repository.FileMetadataRepository;
+import com.blog.backend.feature.file.utils.FileTypeResolver;
 import com.blog.backend.global.error.CustomException;
 import com.blog.backend.infra.s3.S3FileService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
  *
  * 리팩터링 핵심:
  * - FileMetadata는 어떤 도메인에도 속하지 않는 독립 엔티티
+ * - MIME 타입 기반 자동 분류 (IMAGE, VIDEO, DOCUMENT)
  * - 매핑 테이블(PostFile 등)을 통해서만 연결 관리
  * - 고아 파일은 스케줄러가 일괄 정리
  */
@@ -36,13 +39,20 @@ public class FileMetadataServiceImpl implements FileMetadataService {
 
     @Override
     public UploadResponse uploadEditorImage(MultipartFile file) throws IOException {
-        log.info("에디터 이미지 업로드 시작: fileName={}", file.getOriginalFilename());
+        log.info("에디터 파일 업로드 시작: fileName={}, contentType={}",
+                file.getOriginalFilename(), file.getContentType());
+
+        // MIME 타입 기반 자동 분류
+        FileMetadataType fileType = FileTypeResolver.resolveFileType(file.getContentType());
+
+        log.info("파일 타입 분류 완료: fileName={}, fileType={}",
+                file.getOriginalFilename(), fileType);
 
         // S3 업로드 및 DB 저장 (독립 상태)
-        FileMetadata fileMetadata = s3FileService.uploadBlogImage(file);
+        FileMetadata fileMetadata = s3FileService.uploadFile(file, fileType);
 
-        log.info("에디터 이미지 업로드 완료: fileId={}, url={}",
-                fileMetadata.getId(), fileMetadata.getUrl());
+        log.info("에디터 파일 업로드 완료: fileId={}, fileType={}, url={}",
+                fileMetadata.getId(), fileType, fileMetadata.getUrl());
 
         return UploadResponse.from(fileMetadata);
     }
@@ -70,7 +80,8 @@ public class FileMetadataServiceImpl implements FileMetadataService {
             try {
                 s3FileService.deleteFile(file);
                 deletedCount++;
-                log.info("고아 파일 삭제 완료: fileId={}, s3Key={}", file.getId(), file.getS3Key());
+                log.info("고아 파일 삭제 완료: fileId={}, fileType={}, s3Key={}",
+                        file.getId(), file.getFileMetadataType(), file.getS3Key());
             } catch (Exception e) {
                 log.error("고아 파일 삭제 실패: fileId={}, error={}", file.getId(), e.getMessage(), e);
                 // 실패해도 계속 진행 (다음 스케줄에서 재시도)

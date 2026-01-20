@@ -47,6 +47,16 @@ spring:
             enabled: true
             max-file-size: 100MB      # 단일 파일 최대 크기
             max-request-size: 100MB   # 전체 요청 최대 크기
+    # AWS S3 설정
+    cloud:
+        aws:
+            credentials:
+                access-key: ${AWS_ACCESS_KEY}
+                secret-key: ${AWS_SECRET_KEY}
+            region:
+                static: ap-northeast-2
+            s3:
+                bucket: ${AWS_BUCKET}
 
 # Server Port
 server:
@@ -81,13 +91,3 @@ jwt:
     access-token-validity: 1800000
     # 7day = 7 * 24 * 60 * 60 * 1000(ms)
     refresh-token-validity: 604800000
-
-cloud:
-    aws:
-        credentials:
-            access-key: ${AWS_ACCESS_KEY}
-            secret-key: ${AWS_SECRET_KEY}
-        region:
-            static: ap-northeast-2
-        s3:
-            bucket: ${AWS_BUCKET}

@@ -1,15 +1,12 @@
 package com.blog.backend.feature.post.dto;
 
-import com.blog.backend.feature.post.entity.Post;
 import com.blog.backend.feature.post.entity.PostType;
 import com.blog.backend.feature.post.entity.PostStatus;
-import com.blog.backend.feature.stack.entity.Stack;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class PostResponse {
 
@@ -21,28 +18,43 @@ public class PostResponse {
     public static class PostItems {
 
         private Long id;
+        private String slug;
         private String title;
         private String excerpt;
         private PostType postType;
         private PostStatus status;
-        private String thumbnailUrl;  // 썸네일 URL 추가
+        private String thumbnailUrl;
         private List<String> tags;
         private List<String> stacks;
         private LocalDateTime createdAt;
 
-        public static PostItems from(Post post) {
+        /**
+         * 서비스 레이어에서 준비된 데이터로 DTO 생성
+         * Lazy Loading 방지: 모든 데이터를 파라미터로 받음
+         */
+        public static PostItems of(
+                Long id,
+                String slug,
+                String title,
+                String excerpt,
+                PostType postType,
+                PostStatus status,
+                String thumbnailUrl,
+                List<String> tags,
+                List<String> stacks,
+                LocalDateTime createdAt
+        ) {
             return PostItems.builder()
-                    .id(post.getId())
-                    .title(post.getTitle())
-                    .excerpt(post.getExcerpt())
-                    .postType(post.getPostType())
-                    .status(post.getStatus())
-                    .thumbnailUrl(post.getThumbnailUrl())  // 썸네일 URL
-                    .tags(post.getTags())
-                    .stacks(post.getStacks().stream()
-                            .map(Stack::getName)
-                            .collect(Collectors.toList()))
-                    .createdAt(post.getCreatedAt())
+                    .id(id)
+                    .slug(slug)
+                    .title(title)
+                    .excerpt(excerpt)
+                    .postType(postType)
+                    .status(status)
+                    .thumbnailUrl(thumbnailUrl)
+                    .tags(tags)
+                    .stacks(stacks)
+                    .createdAt(createdAt)
                     .build();
         }
     }
@@ -55,56 +67,52 @@ public class PostResponse {
     public static class Detail {
 
         private Long id;
+        private String slug;
         private String title;
         private String excerpt;
         private PostType postType;
         private String content;
         private PostStatus status;
-        private String thumbnailUrl;  // 썸네일 URL 추가
+        private String thumbnailUrl;
         private List<String> tags;
         private List<String> stacks;
-        private Adjacent prev;
-        private Adjacent next;
+        private List<PostItems> relatedPosts;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
-        public static Detail from(Post post, Post prevPost, Post nextPost) {
+        /**
+         * 서비스 레이어에서 준비된 데이터로 DTO 생성
+         * Lazy Loading 방지: 모든 데이터를 파라미터로 받음
+         */
+        public static Detail of(
+                Long id,
+                String slug,
+                String title,
+                String excerpt,
+                PostType postType,
+                String content,
+                PostStatus status,
+                String thumbnailUrl,
+                List<String> tags,
+                List<String> stacks,
+                List<PostItems> relatedPosts,
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt
+        ) {
             return Detail.builder()
-                    .id(post.getId())
-                    .title(post.getTitle())
-                    .excerpt(post.getExcerpt())
-                    .postType(post.getPostType())
-                    .content(post.getContent())
-                    .status(post.getStatus())
-                    .thumbnailUrl(post.getThumbnailUrl())  // 썸네일 URL
-                    .tags(post.getTags())
-                    .stacks(post.getStacks().stream()
-                            .map(Stack::getName)
-                            .collect(Collectors.toList()))
-                    .prev(prevPost != null ? Adjacent.from(prevPost) : null)
-                    .next(nextPost != null ? Adjacent.from(nextPost) : null)
-                    .createdAt(post.getCreatedAt())
-                    .updatedAt(post.getUpdatedAt())
-                    .build();
-        }
-    }
-
-    /**
-     * 인접 게시글 응답 (이전/다음)
-     */
-    @Getter
-    @Builder
-    public static class Adjacent {
-
-        private Long id;
-        private String title;
-        private PostType postType;
-
-        public static Adjacent from(Post post) {
-            return Adjacent.builder()
-                    .id(post.getId())
-                    .title(post.getTitle())
-                    .postType(post.getPostType())
+                    .id(id)
+                    .slug(slug)
+                    .title(title)
+                    .excerpt(excerpt)
+                    .postType(postType)
+                    .content(content)
+                    .status(status)
+                    .thumbnailUrl(thumbnailUrl)
+                    .tags(tags)
+                    .stacks(stacks)
+                    .relatedPosts(relatedPosts != null ? relatedPosts : List.of())
+                    .createdAt(createdAt)
+                    .updatedAt(updatedAt)
                     .build();
         }
     }

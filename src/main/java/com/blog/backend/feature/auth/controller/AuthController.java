@@ -7,7 +7,7 @@ import com.blog.backend.global.common.ApiResponse;
 import com.blog.backend.global.error.CustomException;
 import com.blog.backend.global.utils.CookieUtil;
 import com.blog.backend.infra.security.JwtTokenProvider;
-import com.blog.backend.feature.auth.dto.AuthResponse;
+import com.blog.backend.feature.auth.dto.UserResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 인증 관련 API
@@ -35,7 +34,7 @@ public class AuthController {
      * POST /api/auth/signup
      */
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<AuthResponse.LoginResponse>> signUp(
+    public ResponseEntity<ApiResponse<UserResponse.UserInfo>> signUp(
             @Valid @RequestBody AuthRequest.SignUpRequest request,
             HttpServletResponse response
     ) {
@@ -46,7 +45,7 @@ public class AuthController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(AuthResponse.LoginResponse.from(user), "회원가입이 완료되었습니다"));
+                .body(ApiResponse.success(UserResponse.UserInfo.from(user), "회원가입이 완료되었습니다"));
     }
 
     /**
@@ -54,7 +53,7 @@ public class AuthController {
      * POST /api/auth/login
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse.LoginResponse>> login(
+    public ResponseEntity<ApiResponse<UserResponse.UserInfo>> login(
             @Valid @RequestBody AuthRequest.LoginRequest request,
             HttpServletResponse response
     ) {
@@ -63,7 +62,7 @@ public class AuthController {
         // 토큰 생성 및 쿠키 설정
         setTokenCookies(response, user);
 
-        return ResponseEntity.ok(ApiResponse.success(AuthResponse.LoginResponse.from(user), "로그인 성공"));
+        return ResponseEntity.ok(ApiResponse.success(UserResponse.UserInfo.from(user), "로그인 성공"));
     }
 
     /**
@@ -72,7 +71,7 @@ public class AuthController {
      * - Refresh Token은 쿠키에서 자동으로 추출
      */
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<AuthResponse.LoginResponse>> refresh(
+    public ResponseEntity<ApiResponse<UserResponse.UserInfo>> refresh(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
@@ -93,7 +92,7 @@ public class AuthController {
         // 새 토큰 생성 및 쿠키 설정
         setTokenCookies(response, user);
 
-        return ResponseEntity.ok(ApiResponse.success(AuthResponse.LoginResponse.from(user), "토큰이 재발급되었습니다"));
+        return ResponseEntity.ok(ApiResponse.success(UserResponse.UserInfo.from(user), "토큰이 재발급되었습니다"));
     }
 
     /**

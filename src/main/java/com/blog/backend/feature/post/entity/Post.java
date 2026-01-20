@@ -33,6 +33,16 @@ public class Post extends BaseTimeEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String title;
 
+    /**
+     * URL-safe한 게시글 식별자
+     * - 제목 기반으로 자동 생성
+     * - 한글 지원
+     * - UNIQUE 제약조건
+     * - 조회 시 ID 대신 사용
+     */
+    @Column(nullable = false, unique = true, length = 200)
+    private String slug;
+
     @Column(nullable = false, length = 500)
     private String excerpt;
 
@@ -54,13 +64,6 @@ public class Post extends BaseTimeEntity {
     private String thumbnailUrl;
 
     @BatchSize(size = 100)
-    @ElementCollection
-    @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "tag")
-    @OrderColumn(name = "order_idx")
-    private List<String> tags = new ArrayList<>();
-
-    @BatchSize(size = 100)
     @ManyToMany
     @JoinTable(
             name = "post_stack",
@@ -70,13 +73,21 @@ public class Post extends BaseTimeEntity {
     @OrderBy("name ASC")
     private Set<Stack> stacks = new HashSet<>();
 
+    @BatchSize(size = 100)
+    @ElementCollection
+    @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "tag")
+    @OrderColumn(name = "order_idx")
+    private List<String> tags = new ArrayList<>();
+
     // === 생성자 === //
     @Builder
-    public Post(User user, PostType postType, String title, String excerpt,
+    public Post(User user, PostType postType, String title, String slug, String excerpt,
                 String content, PostStatus status, String thumbnailUrl) {
         this.user = user;
         this.postType = postType;
         this.title = title;
+        this.slug = slug;
         this.excerpt = excerpt;
         this.content = content;
         this.status = status != null ? status : PostStatus.PRIVATE;
@@ -88,12 +99,20 @@ public class Post extends BaseTimeEntity {
     /**
      * 게시글 수정
      */
-    public void update(PostType category, String title, String excerpt, String content, PostStatus status) {
+    public void update(PostType category, String title, String slug, String excerpt, String content, PostStatus status) {
         this.postType = category;
         this.title = title;
+        this.slug = slug;
         this.excerpt = excerpt;
         this.content = content;
         this.status = status;
+    }
+
+    /**
+     * slug 업데이트
+     */
+    public void updateSlug(String slug) {
+        this.slug = slug;
     }
 
     /**

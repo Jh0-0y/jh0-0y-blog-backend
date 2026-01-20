@@ -34,13 +34,13 @@ public class PostController {
      * 게시글 생성 (Multipart 지원)
      * POST /api/posts
      *
-     * @param data 게시글 데이터 (JSON)
+     * @param request 게시글 데이터 (JSON)
      * @param thumbnail 썸네일 이미지 파일 (선택)
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<PostResponse.Detail>> createPost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestPart("data") @Valid PostRequest.Create request,
+            @RequestPart @Valid PostRequest.Create request,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail
     ) {
         PostResponse.Detail response = postService.createPost(
@@ -55,21 +55,22 @@ public class PostController {
 
     /**
      * 게시글 수정 (Multipart 지원)
-     * PUT /api/posts/{postId}
+     * PUT /api/posts/{slug}
      *
-     * @param data 게시글 데이터 (JSON)
+     * @param slug 수정할 게시글 slug
+     * @param request 게시글 데이터 (JSON)
      * @param thumbnail 새 썸네일 이미지 파일 (선택)
      */
-    @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{slug}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<PostResponse.Detail>> updatePost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long postId,
-            @RequestPart("data") @Valid PostRequest.Update request,
+            @PathVariable String slug,
+            @RequestPart @Valid PostRequest.Update request,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail
     ) {
-        PostResponse.Detail response = postService.updatePost(
+        PostResponse.Detail response = postService.updatePostBySlug(
                 userDetails.getUserId(),
-                postId,
+                slug,
                 request,
                 thumbnail
         );
@@ -78,23 +79,44 @@ public class PostController {
 
     /**
      * 게시글 삭제
-     * DELETE /api/posts/{postId}
+     * DELETE /api/posts/{slug}
+     *
+     * @param slug 삭제할 게시글 slug
      */
-    @DeleteMapping("/{postId}")
+    @DeleteMapping("/{slug}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long postId
+            @PathVariable String slug
     ) {
-        postService.deletePost(userDetails.getUserId(), postId);
+        postService.deletePostBySlug(userDetails.getUserId(), slug);
         return ResponseEntity.ok(ApiResponse.success(null, "게시글이 삭제되었습니다"));
     }
 
     /**
-     * 게시글 상세 조회
-     * GET /api/posts/{postId}
+     * 게시글 상세 조회 (Slug 기반) - 새로운 메인 조회 방식
+     * GET /api/posts/{slug}
+     *
+     * 예시:
+     * - GET /api/posts/spring-boot-시작하기
+     * - GET /api/posts/react-입문-가이드
      */
-    @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<PostResponse.Detail>> getPost(
+    @GetMapping("/{slug}")
+    public ResponseEntity<ApiResponse<PostResponse.Detail>> getPostBySlug(
+            @PathVariable String slug
+    ) {
+        PostResponse.Detail response = postService.getPostBySlug(slug);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * 게시글 상세 조회 (ID 기반) - 하위 호환용
+     * GET /api/posts/id/{postId}
+     *
+     * @deprecated Slug 기반 조회 사용 권장
+     */
+    @Deprecated
+    @GetMapping("/id/{postId}")
+    public ResponseEntity<ApiResponse<PostResponse.Detail>> getPostById(
             @PathVariable Long postId
     ) {
         PostResponse.Detail response = postService.getPost(postId);
@@ -105,6 +127,13 @@ public class PostController {
 
     /**
      * 공개 게시글 검색 (복합 필터링)
+     * GET /api/posts
+     *
+     * 쿼리 파라미터:
+     * - postType: 게시글 타입 (선택)
+     * - stack: 스택명 (선택)
+     * - keyword: 검색어 (선택)
+     * - page, size, sort
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> searchPosts(
@@ -120,6 +149,7 @@ public class PostController {
 
     /**
      * 내 게시글 검색 (복합 필터링)
+     * GET /api/posts/my
      */
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> searchMyPosts(
@@ -133,7 +163,8 @@ public class PostController {
         Page<PostResponse.PostItems> posts = postService.searchMyPosts(userDetails.getUserId(), condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(posts)));
     }
-// ========== 기존 API (하위 호환, Deprecated) ========== //
+
+    // ========== 기존 API (하위 호환, Deprecated) ========== //
 
     @Deprecated
     @GetMapping("/postType/{postType}")

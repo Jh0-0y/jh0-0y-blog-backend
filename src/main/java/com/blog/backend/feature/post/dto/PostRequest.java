@@ -36,6 +36,7 @@ public class PostRequest {
         private PostType postType;
 
         @NotBlank(message = "내용을 입력해주세요")
+        @Size(max = 50000, message = "본문은 50000자 이내로 입력해주세요")
         private String content;
 
         private PostStatus status;
@@ -76,7 +77,7 @@ public class PostRequest {
         private PostType postType;
 
         @NotBlank(message = "내용을 입력해주세요")
-        @Size(max = 5000, message = "본문은 5000자 이내로 입력해주세요")
+        @Size(max = 50000, message = "본문은 50000자 이내로 입력해주세요")
         private String content;
 
         private PostStatus status;

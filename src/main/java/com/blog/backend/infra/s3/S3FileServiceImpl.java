@@ -43,10 +43,10 @@ public class S3FileServiceImpl implements S3FileService {
     private final S3Presigner s3Presigner;
     private final FileMetadataRepository fileMetadataRepository;
 
-    @Value("${cloud.aws.s3.bucket}")
+    @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
 
-    @Value("${cloud.aws.region.static}")
+    @Value("${spring.cloud.aws.region.static}")
     private String region;
 
     @Value("${cloud.aws.cloudfront.domain:}")
