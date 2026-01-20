@@ -1,4 +1,4 @@
-package com.sooscode.sooscode_api.infra.config;
+package com.blog.backend.infra.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

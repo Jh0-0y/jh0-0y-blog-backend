@@ -25,7 +25,7 @@ spring:
         show-sql: false
         hibernate:
             # create, create-drop, update, validate, none
-            ddl-auto: update
+            ddl-auto: create
         properties:
             hibernate:
                 format_sql: true
@@ -57,6 +57,9 @@ spring:
                 static: ap-northeast-2
             s3:
                 bucket: ${AWS_BUCKET}
+            cloudfront:
+                domain: ${AWS_DOMAIN}
+                distribution-id: ${AWS_DISTRIBUTION_ID}
 
 # Server Port
 server:
