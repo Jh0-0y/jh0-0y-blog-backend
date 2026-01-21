@@ -2,7 +2,7 @@ package com.blog.backend.feature.post.entity;
 
 import com.blog.backend.feature.stack.entity.Stack;
 import com.blog.backend.feature.auth.entity.User;
-import com.blog.backend.global.common.BaseTimeEntity;
+import com.blog.backend.global.core.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;

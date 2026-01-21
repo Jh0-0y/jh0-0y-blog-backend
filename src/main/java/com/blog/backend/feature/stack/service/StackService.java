@@ -3,7 +3,7 @@ package com.blog.backend.feature.stack.service;
 import com.blog.backend.feature.stack.dto.StackResponse;
 import com.blog.backend.feature.stack.dto.StackRequest;
 import com.blog.backend.feature.stack.entity.StackGroup;
-import com.blog.backend.global.error.CustomException;
+import com.blog.backend.global.core.exception.CustomException;
 
 import java.util.List;
 

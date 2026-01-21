@@ -5,7 +5,7 @@ import com.blog.backend.feature.stack.dto.StackRequest;
 import com.blog.backend.feature.stack.entity.Stack;
 import com.blog.backend.feature.stack.entity.StackGroup;
 import com.blog.backend.feature.stack.repository.StackRepository;
-import com.blog.backend.global.error.CustomException;
+import com.blog.backend.global.core.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

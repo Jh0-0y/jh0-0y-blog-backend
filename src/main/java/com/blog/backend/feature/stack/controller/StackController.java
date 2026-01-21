@@ -4,7 +4,7 @@ import com.blog.backend.feature.stack.dto.StackResponse;
 import com.blog.backend.feature.stack.dto.StackRequest;
 import com.blog.backend.feature.stack.entity.StackGroup;
 import com.blog.backend.feature.stack.service.StackService;
-import com.blog.backend.global.common.ApiResponse;
+import com.blog.backend.global.core.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

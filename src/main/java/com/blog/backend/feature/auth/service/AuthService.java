@@ -4,7 +4,7 @@ import com.blog.backend.feature.auth.dto.AuthRequest;
 import com.blog.backend.feature.auth.dto.UserRequest;
 import com.blog.backend.feature.auth.entity.User;
 import com.blog.backend.feature.auth.dto.UserResponse;
-import com.blog.backend.global.error.CustomException;
+import com.blog.backend.global.core.exception.CustomException;
 
 public interface AuthService {
 

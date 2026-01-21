@@ -1,6 +1,6 @@
 package com.blog.backend.feature.stack.entity;
 
-import com.blog.backend.global.error.CustomException;
+import com.blog.backend.global.core.exception.CustomException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

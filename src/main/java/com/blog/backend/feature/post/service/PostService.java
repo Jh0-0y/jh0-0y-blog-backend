@@ -4,7 +4,7 @@ import com.blog.backend.feature.post.dto.PostResponse;
 import com.blog.backend.feature.post.dto.PostRequest;
 import com.blog.backend.feature.post.dto.PostSearchCondition;
 import com.blog.backend.feature.post.entity.PostType;
-import com.blog.backend.global.error.CustomException;
+import com.blog.backend.global.core.exception.CustomException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;

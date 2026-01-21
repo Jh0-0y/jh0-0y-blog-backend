@@ -1,11 +1,10 @@
 package com.blog.backend.feature.auth.controller;
 
-import com.blog.backend.feature.auth.dto.AuthRequest;
 import com.blog.backend.feature.auth.dto.UserRequest;
 import com.blog.backend.feature.auth.service.AuthService;
-import com.blog.backend.global.common.ApiResponse;
-import com.blog.backend.global.error.CustomException;
-import com.blog.backend.infra.security.CustomUserDetails;
+import com.blog.backend.global.core.response.ApiResponse;
+import com.blog.backend.global.core.exception.CustomException;
+import com.blog.backend.global.security.auth.CustomUserDetails;
 import com.blog.backend.feature.auth.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

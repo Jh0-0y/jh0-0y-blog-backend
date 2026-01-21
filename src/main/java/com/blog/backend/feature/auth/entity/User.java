@@ -1,7 +1,7 @@
 package com.blog.backend.feature.auth.entity;
 
 import com.blog.backend.feature.post.entity.Post;
-import com.blog.backend.global.common.BaseTimeEntity;
+import com.blog.backend.global.core.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

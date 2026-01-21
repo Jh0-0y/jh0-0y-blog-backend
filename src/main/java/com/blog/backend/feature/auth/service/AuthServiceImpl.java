@@ -9,10 +9,10 @@ import com.blog.backend.feature.auth.entity.UserFileType;
 import com.blog.backend.feature.auth.entity.UserRole;
 import com.blog.backend.feature.auth.repository.UserFileRepository;
 import com.blog.backend.feature.auth.repository.UserRepository;
-import com.blog.backend.feature.file.entity.FileMetadata;
-import com.blog.backend.feature.file.repository.FileMetadataRepository;
-import com.blog.backend.global.error.CustomException;
-import com.blog.backend.infra.s3.S3FileService;
+import com.blog.backend.global.file.entity.FileMetadata;
+import com.blog.backend.global.file.repository.FileMetadataRepository;
+import com.blog.backend.global.core.exception.CustomException;
+import com.blog.backend.infra.s3.service.S3FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -161,39 +161,39 @@ public class AuthServiceImpl implements AuthService {
      * - UserFile 중간테이블에 fileId 업데이트 (또는 새로 생성)
      */
     private void updateProfileImage(User user, MultipartFile profileImage) throws IOException {
-        log.info("프로필 이미지 수정 시작: userId={}", user.getId());
-
-        // 1. 기존 프로필 이미지 삭제
-        deleteExistingProfileImage(user.getId());
-
-        // 2. 새 프로필 이미지 S3 업로드
-        FileMetadata newFileMetadata = s3FileService.uploadProfileImage(profileImage, user.getId());
-        log.info("새 프로필 이미지 업로드 완료: fileId={}, url={}",
-                newFileMetadata.getId(), newFileMetadata.getUrl());
-
-        // 3. User 엔티티에 새 이미지 URL 저장
-        user.updateProfileImageUrl(newFileMetadata.getUrl());
-
-        // 4. UserFile 중간테이블에 매핑 정보 저장 (기존 레코드가 있으면 fileId만 업데이트)
-        UserFile userFile = userFileRepository.findByUserIdAndFileType(user.getId(), UserFileType.PROFILE)
-                .orElse(null);
-
-        if (userFile != null) {
-            // 기존 레코드가 있으면 fileId만 업데이트 (UserFile은 불변 엔티티이므로 삭제 후 재생성)
-            userFileRepository.delete(userFile);
-            log.info("기존 UserFile 레코드 삭제: userFileId={}", userFile.getId());
-        }
-
-        // 새 UserFile 레코드 생성
-        UserFile newUserFile = UserFile.builder()
-                .userId(user.getId())
-                .fileId(newFileMetadata.getId())
-                .fileType(UserFileType.PROFILE)
-                .build();
-
-        userFileRepository.save(newUserFile);
-        log.info("새 UserFile 레코드 생성: userFileId={}, fileId={}",
-                newUserFile.getId(), newFileMetadata.getId());
+//        log.info("프로필 이미지 수정 시작: userId={}", user.getId());
+//
+//        // 1. 기존 프로필 이미지 삭제
+//        deleteExistingProfileImage(user.getId());
+//
+//        // 2. 새 프로필 이미지 S3 업로드
+//        FileMetadata newFileMetadata = s3FileService.uploadPublicImage(profileImage);
+//        log.info("새 프로필 이미지 업로드 완료: fileId={}, url={}",
+//                newFileMetadata.getId(), newFileMetadata.getUrl());
+//
+//        // 3. User 엔티티에 새 이미지 URL 저장
+//        user.updateProfileImageUrl(newFileMetadata.getUrl());
+//
+//        // 4. UserFile 중간테이블에 매핑 정보 저장 (기존 레코드가 있으면 fileId만 업데이트)
+//        UserFile userFile = userFileRepository.findByUserIdAndFileType(user.getId(), UserFileType.PROFILE)
+//                .orElse(null);
+//
+//        if (userFile != null) {
+//            // 기존 레코드가 있으면 fileId만 업데이트 (UserFile은 불변 엔티티이므로 삭제 후 재생성)
+//            userFileRepository.delete(userFile);
+//            log.info("기존 UserFile 레코드 삭제: userFileId={}", userFile.getId());
+//        }
+//
+//        // 새 UserFile 레코드 생성
+//        UserFile newUserFile = UserFile.builder()
+//                .userId(user.getId())
+//                .fileId(newFileMetadata.getId())
+//                .fileType(UserFileType.PROFILE)
+//                .build();
+//
+//        userFileRepository.save(newUserFile);
+//        log.info("새 UserFile 레코드 생성: userFileId={}, fileId={}",
+//                newUserFile.getId(), newFileMetadata.getId());
     }
 
     /**
@@ -202,20 +202,20 @@ public class AuthServiceImpl implements AuthService {
      * - FileMetadata 레코드 삭제
      */
     private void deleteExistingProfileImage(Long userId) {
-        log.info("기존 프로필 이미지 삭제 시작: userId={}", userId);
-
-        // 1. UserFile에서 기존 프로필 이미지 매핑 조회
-        userFileRepository.findByUserIdAndFileType(userId, UserFileType.PROFILE)
-                .ifPresent(userFile -> {
-                    // 2. FileMetadata 조회
-                    fileMetadataRepository.findById(userFile.getFileId())
-                            .ifPresent(fileMetadata -> {
-                                // 3. S3 파일 + FileMetadata 삭제
-                                s3FileService.deleteFile(fileMetadata);
-                                log.info("기존 프로필 이미지 삭제 완료: fileId={}, s3Key={}",
-                                        fileMetadata.getId(), fileMetadata.getS3Key());
-                            });
-                });
+//        log.info("기존 프로필 이미지 삭제 시작: userId={}", userId);
+//
+//        // 1. UserFile에서 기존 프로필 이미지 매핑 조회
+//        userFileRepository.findByUserIdAndFileType(userId, UserFileType.PROFILE)
+//                .ifPresent(userFile -> {
+//                    // 2. FileMetadata 조회
+//                    fileMetadataRepository.findById(userFile.getFileId())
+//                            .ifPresent(fileMetadata -> {
+//                                // 3. S3 파일 + FileMetadata 삭제
+//                                s3FileService.deleteFile(fileMetadata);
+//                                log.info("기존 프로필 이미지 삭제 완료: fileId={}, s3Key={}",
+//                                        fileMetadata.getId(), fileMetadata.getS3Key());
+//                            });
+//                });
     }
 
     private void validateDuplicateEmail(String email) {

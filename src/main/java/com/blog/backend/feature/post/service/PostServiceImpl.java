@@ -1,7 +1,7 @@
 package com.blog.backend.feature.post.service;
 
-import com.blog.backend.feature.file.entity.FileMetadata;
-import com.blog.backend.feature.file.service.FileMetadataService;
+import com.blog.backend.global.file.entity.FileMetadata;
+import com.blog.backend.global.file.service.FileMetadataService;
 import com.blog.backend.feature.post.dto.PostRequest;
 import com.blog.backend.feature.post.dto.PostResponse;
 import com.blog.backend.feature.post.dto.PostSearchCondition;
@@ -18,8 +18,9 @@ import com.blog.backend.feature.stack.entity.Stack;
 import com.blog.backend.feature.stack.repository.StackRepository;
 import com.blog.backend.feature.auth.entity.User;
 import com.blog.backend.feature.auth.repository.UserRepository;
-import com.blog.backend.global.error.CustomException;
-import com.blog.backend.infra.s3.S3FileService;
+import com.blog.backend.global.core.exception.CustomException;
+import com.blog.backend.infra.s3.dto.S3UploadResult;
+import com.blog.backend.infra.s3.service.S3FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -88,17 +89,16 @@ public class PostServiceImpl implements PostService {
         // 썸네일 처리
         if (thumbnail != null && !thumbnail.isEmpty()) {
             try {
-                log.info("게시글 생성 - 썸네일 업로드 시작: postId={}", savedPost.getId());
+                S3UploadResult result = s3FileService.uploadPublicImage(thumbnail);
+                FileMetadata fileMetadata = fileMetadataService.saveFileMetadata(result);
+                log.info("게시글 썸네일 업로드 완료: postId={}, fileId={}", savedPost.getId(), fileMetadata.getId());
 
-                FileMetadata thumbnailFile = s3FileService.uploadBlogThumbnail(thumbnail, savedPost.getId());
-
-                PostFile thumbnailMapping = PostFile.ofThumbnail(savedPost.getId(), thumbnailFile.getId());
+                PostFile thumbnailMapping = PostFile.ofThumbnail(savedPost.getId(), fileMetadata.getId());
                 postFileRepository.save(thumbnailMapping);
+                log.info("중간테이블 기록 시작: postId={}, fileId={}", savedPost.getId(), fileMetadata.getId());
 
-                savedPost.updateThumbnailUrl(thumbnailFile.getUrl());
-
-                log.info("게시글 생성 - 썸네일 업로드 완료: postId={}, fileId={}, url={}",
-                        savedPost.getId(), thumbnailFile.getId(), thumbnailFile.getUrl());
+                savedPost.updateThumbnailUrl(fileMetadata.getUrl());
+                log.info("게시글에 썸네일 Url 저장: url={}", fileMetadata.getUrl());
 
             } catch (IOException e) {
                 log.error("게시글 생성 - 썸네일 업로드 실패: postId={}, error={}",
@@ -440,30 +440,29 @@ public class PostServiceImpl implements PostService {
      * 케이스 3: 둘 다 없음 → 유지
      */
     private void handleThumbnailUpdate(Post post, MultipartFile thumbnail, Boolean removeThumbnail) {
-        Long postId = post.getId();
 
         // 케이스 1: 새 썸네일 파일 전송 → 교체
         if (thumbnail != null && !thumbnail.isEmpty()) {
-            log.info("게시글 수정 - 썸네일 교체 시작: postId={}", postId);
+            log.info("게시글 수정 - 썸네일 교체 시작: postId={}", post.getId());
 
             // 기존 썸네일 삭제
-            deleteExistingThumbnail(postId);
+            deleteExistingThumbnail(post.getId());
 
-            // 새 썸네일 업로드
             try {
-                FileMetadata thumbnailFile = s3FileService.uploadBlogThumbnail(thumbnail, postId);
+                S3UploadResult result = s3FileService.uploadPublicImage(thumbnail);
+                FileMetadata fileMetadata = fileMetadataService.saveFileMetadata(result);
+                log.info("게시글 수정 - 썸네일 업로드 완료: postId={}, fileId={}", post.getId(), fileMetadata.getId());
 
-                PostFile thumbnailMapping = PostFile.ofThumbnail(postId, thumbnailFile.getId());
+                PostFile thumbnailMapping = PostFile.ofThumbnail(post.getId(), fileMetadata.getId());
                 postFileRepository.save(thumbnailMapping);
+                log.info("게시글 수정 - 중간테이블 기록 완료: postId={}, fileId={}", post.getId(), fileMetadata.getId());
 
-                post.updateThumbnailUrl(thumbnailFile.getUrl());
-
-                log.info("게시글 수정 - 썸네일 교체 완료: postId={}, fileId={}, url={}",
-                        postId, thumbnailFile.getId(), thumbnailFile.getUrl());
+                post.updateThumbnailUrl(fileMetadata.getUrl());
+                log.info("게시글 수정 - 썸네일 Url 업데이트 완료: url={}", fileMetadata.getUrl());
 
             } catch (IOException e) {
                 log.error("게시글 수정 - 썸네일 업로드 실패: postId={}, error={}",
-                        postId, e.getMessage(), e);
+                        post.getId(), e.getMessage(), e);
                 throw new CustomException("썸네일 업로드에 실패했습니다.",
                         org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -472,15 +471,15 @@ public class PostServiceImpl implements PostService {
 
         // 케이스 2: removeThumbnail = true → 삭제
         if (Boolean.TRUE.equals(removeThumbnail)) {
-            log.info("게시글 수정 - 썸네일 제거 시작: postId={}", postId);
-            deleteExistingThumbnail(postId);
+            log.info("게시글 수정 - 썸네일 제거 시작: postId={}", post.getId());
+            deleteExistingThumbnail(post.getId());
             post.removeThumbnail();
-            log.info("게시글 수정 - 썸네일 제거 완료: postId={}", postId);
+            log.info("게시글 수정 - 썸네일 제거 완료: postId={}", post.getId());
             return;
         }
 
         // 케이스 3: 유지
-        log.info("게시글 수정 - 썸네일 유지: postId={}", postId);
+        log.info("게시글 수정 - 썸네일 유지: postId={}", post.getId());
     }
 
     /**
@@ -491,12 +490,14 @@ public class PostServiceImpl implements PostService {
                 .findTopByPostIdAndFileType(postId, PostFileType.THUMBNAIL);
 
         if (existingThumbnail.isPresent()) {
-            Long fileId = existingThumbnail.get().getFileId();
+            PostFile postFile = existingThumbnail.get();
+            Long fileId = postFile.getFileId();
 
             try {
-                FileMetadata oldFile = fileMetadataService.getFileMetadata(fileId);
-                s3FileService.deleteFile(oldFile);
-                log.info("기존 썸네일 삭제 완료: postId={}, fileId={}", postId, fileId);
+                postFileRepository.delete(postFile);
+                s3FileService.deleteFile(fileMetadataService.getFileMetadata(fileId).getS3Key());
+                fileMetadataService.deleteFileMetadata(fileId);
+                log.info("S3 기존 썸네일 파일 삭제 완료: postId={}, fileId={}", postId, fileId);
 
             } catch (Exception e) {
                 log.error("기존 썸네일 삭제 실패: postId={}, fileId={}, error={}",
