@@ -2,6 +2,7 @@ package com.blog.backend.feature.post.repository;
 
 import com.blog.backend.feature.post.dto.PostSearchCondition;
 import com.blog.backend.feature.post.entity.Post;
+import com.blog.backend.feature.post.entity.PostStatus;
 import com.blog.backend.feature.stack.entity.Stack;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -13,36 +14,37 @@ import java.util.List;
 
 /**
  * Post 엔티티 동적 쿼리 생성용 Specification
+ *
+ * - 공개 조회: PUBLISHED 상태만 대상
+ * - 내 게시글 조회: 상태값 파라미터로 필터링 가능
  */
 public class PostSpecification {
 
     /**
-     * 복합 검색 조건으로 Specification 생성
+     * 공개 게시글 복합 검색 조건 (PUBLISHED만)
      *
-     * @param condition 검색 조건 (post_type, stackName, keyword, status)
+     * @param condition 검색 조건 (postType, stackName, keyword)
      * @return Specification
      */
     public static Specification<Post> withCondition(PostSearchCondition condition) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // 상태 필터 (null이면 무시)
-            if (condition.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), condition.getStatus()));
-            }
+            // 공개된 게시글만 (필수)
+            predicates.add(cb.equal(root.get("status"), PostStatus.PUBLISHED));
 
-            // 게시글 타입 필터 (null이면 무시)
+            // 게시글 타입 필터
             if (condition.getPostType() != null) {
                 predicates.add(cb.equal(root.get("postType"), condition.getPostType()));
             }
 
-            // 스택 필터 (null이면 무시)
+            // 스택 필터
             if (condition.getStackName() != null && !condition.getStackName().isBlank()) {
                 Join<Post, Stack> stackJoin = root.join("stacks", JoinType.INNER);
                 predicates.add(cb.equal(stackJoin.get("name"), condition.getStackName()));
             }
 
-            // 키워드 검색 (null이면 무시) - 제목, 내용, 요약에서 검색
+            // 키워드 검색 - 제목, 요약에서 검색
             if (condition.getKeyword() != null && !condition.getKeyword().isBlank()) {
                 String pattern = "%" + condition.getKeyword() + "%";
                 predicates.add(cb.or(
@@ -51,7 +53,7 @@ public class PostSpecification {
                 ));
             }
 
-            // 중복 제거 (태그 조인 시 필요)
+            // 중복 제거 (스택 조인 시 필요)
             query.distinct(true);
 
             return cb.and(predicates.toArray(new Predicate[0]));
@@ -59,10 +61,10 @@ public class PostSpecification {
     }
 
     /**
-     * 특정 사용자의 게시글 + 복합 검색 조건
+     * 특정 사용자의 게시글 + 복합 검색 조건 (상태별 필터링 가능)
      *
      * @param userId 사용자 ID
-     * @param condition 검색 조건
+     * @param condition 검색 조건 (status 포함)
      * @return Specification
      */
     public static Specification<Post> withUserAndCondition(Long userId, PostSearchCondition condition) {
@@ -72,17 +74,12 @@ public class PostSpecification {
             // 사용자 필터 (필수)
             predicates.add(cb.equal(root.get("user").get("id"), userId));
 
-            // 상태 필터 (null이면 무시 - 내 글은 공개/비공개 모두)
-            if (condition.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), condition.getStatus()));
-            }
-
-            // 카테고리 필터
+            // 게시글 타입 필터
             if (condition.getPostType() != null) {
                 predicates.add(cb.equal(root.get("postType"), condition.getPostType()));
             }
 
-            // 태그 필터
+            // 스택 필터
             if (condition.getStackName() != null && !condition.getStackName().isBlank()) {
                 Join<Post, Stack> stackJoin = root.join("stacks", JoinType.INNER);
                 predicates.add(cb.equal(stackJoin.get("name"), condition.getStackName()));
@@ -102,5 +99,19 @@ public class PostSpecification {
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    /**
+     * PUBLISHED 상태만 조회 (공개 게시글용)
+     */
+    public static Specification<Post> publishedOnly() {
+        return (root, query, cb) -> cb.equal(root.get("status"), PostStatus.PUBLISHED);
+    }
+
+    /**
+     * 특정 사용자의 게시글 필터
+     */
+    public static Specification<Post> byUser(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
     }
 }

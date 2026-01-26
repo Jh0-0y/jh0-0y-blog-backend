@@ -35,12 +35,6 @@ public class FileMetadata extends BaseTimeEntity {
     private String originalName;
 
     /**
-     * S3에 저장된 파일명 (UUID 또는 고정 파일명)
-     */
-    @Column(nullable = false)
-    private String storedName;
-
-    /**
      * S3 전체 경로 (버킷 제외)
      */
     @Column(nullable = false, length = 500)
@@ -68,14 +62,12 @@ public class FileMetadata extends BaseTimeEntity {
     @Builder
     public FileMetadata(
             String originalName,
-            String storedName,
             String s3Key,
             String url,
             String contentType,
             Long size
     ) {
         this.originalName = originalName;
-        this.storedName = storedName;
         this.s3Key = s3Key;
         this.url = url;
         this.contentType = contentType;

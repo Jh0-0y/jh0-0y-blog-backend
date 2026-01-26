@@ -38,15 +38,6 @@ public class Stack extends BaseTimeEntity {
     }
 
     /**
-     * 스택에 연결된 공개 게시글 수
-     */
-    public long getPublicPostCount() {
-        return posts.stream()
-                .filter(Post::isPublic)
-                .count();
-    }
-
-    /**
      * 스택명 변경
      */
     public void updateName(String name) {

@@ -15,51 +15,62 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     // Custom 예외 처리
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(CustomException e) {
         log.error("CustomException: {}", e.getMessage());
-        
-        ErrorResponse response = ErrorResponse.of(
-                e.getMessage(),
-                e.getStatus().value()
-        );
-        
+
+        ErrorResponse response;
+
+        // 필드 에러가 있는 경우 errors 포함
+        if (e.hasFieldErrors()) {
+            response = ErrorResponse.of(
+                    e.getMessage(),
+                    e.getStatus().value(),
+                    e.getErrors()
+            );
+        } else {
+            response = ErrorResponse.of(
+                    e.getMessage(),
+                    e.getStatus().value()
+            );
+        }
+
         return ResponseEntity.status(e.getStatus()).body(response);
     }
-    
+
     // Validation 예외 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
         log.error("ValidationException: {}", e.getMessage());
-        
+
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         ErrorResponse response = ErrorResponse.of(
                 "입력값이 올바르지 않습니다",
                 HttpStatus.BAD_REQUEST.value(),
                 errors
         );
-        
+
         return ResponseEntity.badRequest().body(response);
     }
-    
+
     // 그 외 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
         log.error("Unexpected Exception: ", e);
-        
+
         ErrorResponse response = ErrorResponse.of(
                 "서버 오류가 발생했습니다",
                 HttpStatus.INTERNAL_SERVER_ERROR.value()
         );
-        
+
         return ResponseEntity.internalServerError().body(response);
     }
 }

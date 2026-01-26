@@ -1,18 +1,18 @@
-package com.blog.backend.feature.post.dto;
+package com.blog.backend.global.file.dto;
 
 import com.blog.backend.global.file.entity.FileMetadata;
 import lombok.Builder;
 
 @Builder
-public record PostFileUploadResponse(
+public record FileUploadResponse(
         Long id,
         String originalName,
         String url,
         Long size,
         String contentType
 ) {
-    public static PostFileUploadResponse from(FileMetadata fileMetadata) {
-        return PostFileUploadResponse.builder()
+    public static FileUploadResponse from(FileMetadata fileMetadata) {
+        return FileUploadResponse.builder()
                 .id(fileMetadata.getId())
                 .originalName(fileMetadata.getOriginalName())
                 .url(fileMetadata.getUrl())

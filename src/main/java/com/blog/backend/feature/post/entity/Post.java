@@ -1,7 +1,7 @@
 package com.blog.backend.feature.post.entity;
 
 import com.blog.backend.feature.stack.entity.Stack;
-import com.blog.backend.feature.auth.entity.User;
+import com.blog.backend.feature.user.entity.User;
 import com.blog.backend.global.core.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -90,7 +90,7 @@ public class Post extends BaseTimeEntity {
         this.slug = slug;
         this.excerpt = excerpt;
         this.content = content;
-        this.status = status != null ? status : PostStatus.PRIVATE;
+        this.status = status != null ? status : PostStatus.DELETED;
         this.thumbnailUrl = thumbnailUrl;
     }
 
@@ -99,13 +99,12 @@ public class Post extends BaseTimeEntity {
     /**
      * 게시글 수정
      */
-    public void update(PostType category, String title, String slug, String excerpt, String content, PostStatus status) {
+    public void update(PostType category, String title, String slug, String excerpt, String content) {
         this.postType = category;
         this.title = title;
         this.slug = slug;
         this.excerpt = excerpt;
         this.content = content;
-        this.status = status;
     }
 
     /**
@@ -116,24 +115,37 @@ public class Post extends BaseTimeEntity {
     }
 
     /**
-     * 공개 상태로 변경
+     * 발행됨 상태로 변경
      */
     public void publish() {
-        this.status = PostStatus.PUBLIC;
+        this.status = PostStatus.PUBLISHED;
     }
 
     /**
-     * 비공개 상태로 변경
+     * 삭제됨 상태로 변경 (소프트 삭제)
      */
     public void unpublish() {
-        this.status = PostStatus.PRIVATE;
+        this.status = PostStatus.DELETED;
     }
 
     /**
-     * 공개 여부 확인
+     * 소프트 삭제 처리
+     * - status를 DELETED로 변경
+     * - deletedAt 시간 기록 (BaseTimeEntity)
      */
-    public boolean isPublic() {
-        return this.status == PostStatus.PUBLIC;
+    public void softDelete() {
+        this.status = PostStatus.DELETED;
+        this.markAsDeleted(); // BaseTimeEntity의 메서드 호출
+    }
+
+    /**
+     * 삭제 복구
+     * - status를 PUBLISHED로 변경
+     * - deletedAt 초기화 (BaseTimeEntity)
+     */
+    public void restoreFromDelete() {
+        this.status = PostStatus.PUBLISHED;
+        this.restore(); // BaseTimeEntity의 메서드 호출
     }
 
     /**

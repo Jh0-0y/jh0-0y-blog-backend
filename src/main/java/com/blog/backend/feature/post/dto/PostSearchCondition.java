@@ -16,7 +16,6 @@ public class PostSearchCondition {
     private PostType postType;
     private String stackName;
     private String keyword;
-    private PostStatus status;
 
     /**
      * 공개 게시글 검색 조건 생성
@@ -26,19 +25,17 @@ public class PostSearchCondition {
                 .postType(postType)
                 .stackName(stackName)
                 .keyword(keyword)
-                .status(PostStatus.PUBLIC)
                 .build();
     }
 
     /**
-     * 내 게시글 검색 조건 생성 (상태 무관)
+     * 내 게시글 검색 조건 생성
      */
     public static PostSearchCondition ofMine(PostType postType, String stackName, String keyword) {
         return PostSearchCondition.builder()
                 .postType(postType)
                 .stackName(stackName)
                 .keyword(keyword)
-                .status(null)  // 상태 필터 없음
                 .build();
     }
 }

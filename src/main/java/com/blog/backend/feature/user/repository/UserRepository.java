@@ -1,6 +1,6 @@
-package com.blog.backend.feature.auth.repository;
+package com.blog.backend.feature.user.repository;
 
-import com.blog.backend.feature.auth.entity.User;
+import com.blog.backend.feature.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -15,6 +15,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return 사용자 (Optional)
      */
     Optional<User> findByEmail(String email);
+
+    /**
+     * 닉네임으로 사용자 조회
+     *
+     * @param nickname
+     * @return 사용자 (Optional)
+     */
+    Optional<User> findByNickname(String nickname);
 
     /**
      * 이메일 존재 여부 확인

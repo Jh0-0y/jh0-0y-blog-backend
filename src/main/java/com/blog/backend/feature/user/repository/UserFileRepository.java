@@ -1,7 +1,7 @@
-package com.blog.backend.feature.auth.repository;
+package com.blog.backend.feature.user.repository;
 
-import com.blog.backend.feature.auth.entity.UserFile;
-import com.blog.backend.feature.auth.entity.UserFileType;
+import com.blog.backend.feature.user.entity.UserFile;
+import com.blog.backend.feature.user.entity.UserFileType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

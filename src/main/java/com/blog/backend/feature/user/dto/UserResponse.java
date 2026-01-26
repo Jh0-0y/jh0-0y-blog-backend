@@ -1,7 +1,7 @@
-package com.blog.backend.feature.auth.dto;
+package com.blog.backend.feature.user.dto;
 
-import com.blog.backend.feature.auth.entity.User;
-import com.blog.backend.feature.auth.entity.UserRole;
+import com.blog.backend.feature.user.entity.User;
+import com.blog.backend.feature.user.entity.UserRole;
 import lombok.Builder;
 import lombok.Getter;
 

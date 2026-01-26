@@ -47,7 +47,7 @@ public interface StackRepository extends JpaRepository<Stack, Long> {
     @Query("SELECT s, COUNT(p) as postCount " +
             "FROM Stack s " +
             "JOIN s.posts p " +
-            "WHERE p.status = 'PUBLIC' " +
+            "WHERE p.status = 'PUBLISHED' " +
             "GROUP BY s " +
             "ORDER BY postCount DESC")
     List<Object[]> findStacksWithPublicPostCount();
@@ -62,7 +62,7 @@ public interface StackRepository extends JpaRepository<Stack, Long> {
     @Query("SELECT s, COUNT(p) as postCount " +
             "FROM Stack s " +
             "JOIN s.posts p " +
-            "WHERE p.status = 'PUBLIC' " +
+            "WHERE p.status = 'PUBLISHED' " +
             "GROUP BY s " +
             "ORDER BY postCount DESC " +
             "LIMIT :limit")

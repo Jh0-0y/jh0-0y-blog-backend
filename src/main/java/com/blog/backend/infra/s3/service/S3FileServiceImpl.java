@@ -16,16 +16,16 @@ import software.amazon.awssdk.services.cloudfront.model.CreateInvalidationRespon
 import software.amazon.awssdk.services.cloudfront.model.InvalidationBatch;
 import software.amazon.awssdk.services.cloudfront.model.Paths;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.blog.backend.infra.s3.util.S3FileTypeResolver.*;
 
@@ -61,46 +61,37 @@ public class S3FileServiceImpl implements S3FileService {
 
     @Override
     public S3UploadResult uploadPublicImage(MultipartFile file) throws IOException {
-        validateImageFile(file);
         return uploadFileInternal(file, S3StoragePath.PUBLIC_IMAGE);
     }
 
     @Override
     public S3UploadResult uploadPublicVideo(MultipartFile file) throws IOException {
-        validateVideoFile(file);
         return uploadFileInternal(file, S3StoragePath.PUBLIC_VIDEO);
     }
 
     @Override
     public S3UploadResult uploadPublicDocument(MultipartFile file) throws IOException {
-        validateDocumentFile(file);
         return uploadFileInternal(file, S3StoragePath.PUBLIC_DOCUMENT);
     }
 
     @Override
     public S3UploadResult uploadPublicAudio(MultipartFile file) throws IOException {
-        validateAudioFile(file);
         return uploadFileInternal(file, S3StoragePath.PUBLIC_AUDIO);
     }
 
     @Override
     public S3UploadResult uploadPublicArchive(MultipartFile file) throws IOException {
-        validateArchiveFile(file);
         return uploadFileInternal(file, S3StoragePath.PUBLIC_ARCHIVE);
     }
 
     @Override
     public S3UploadResult uploadPublicAssets(MultipartFile file) throws IOException {
-        // Assets는 별도 검증 없이 업로드 (시스템 내부 자원)
         return uploadFileInternal(file, S3StoragePath.PUBLIC_ASSET);
     }
 
     @Override
     public S3UploadResult uploadFile(MultipartFile file) throws IOException {
-        S3StoragePath storagePath = resolveStoragePath(
-                file.getOriginalFilename(),
-                file.getContentType()
-        );
+        S3StoragePath storagePath = resolveStoragePath(file);
         return uploadFileInternal(file, storagePath);
     }
 
@@ -162,6 +153,46 @@ public class S3FileServiceImpl implements S3FileService {
         }
     }
 
+    @Override
+    public List<String> deleteFiles(List<String> s3Keys) {
+        if (s3Keys == null || s3Keys.isEmpty()) {
+            log.warn("삭제할 S3 Key 목록이 비어있음");
+            return List.of();
+        }
+
+        // null 또는 빈 문자열 필터링
+        List<String> validKeys = s3Keys.stream()
+                .filter(key -> key != null && !key.isBlank())
+                .collect(Collectors.toList());
+
+        if (validKeys.isEmpty()) {
+            log.warn("유효한 S3 Key가 없음");
+            return List.of();
+        }
+
+        log.info("멀티 파일 삭제 시작: 전체={}, 유효={}", s3Keys.size(), validKeys.size());
+
+        List<String> allDeletedKeys = new ArrayList<>();
+
+        try {
+            // 1. S3 멀티 삭제 (1000개씩 분할)
+            allDeletedKeys = deleteMultipleFromS3(validKeys);
+
+            // 2. CloudFront 멀티 캐시 무효화
+            if (!allDeletedKeys.isEmpty()) {
+                invalidateMultipleCloudFrontCache(allDeletedKeys);
+            }
+
+            log.info("멀티 파일 삭제 완료: 요청={}, 성공={}", validKeys.size(), allDeletedKeys.size());
+            return allDeletedKeys;
+
+        } catch (Exception e) {
+            log.error("멀티 파일 삭제 중 예상치 못한 오류: {}", e.getMessage(), e);
+            // 일부 성공한 경우도 있으므로 성공한 목록 반환
+            return allDeletedKeys;
+        }
+    }
+
     /* ========== Private 메서드 ============ */
 
     /**
@@ -172,33 +203,28 @@ public class S3FileServiceImpl implements S3FileService {
             S3StoragePath storagePath
     ) throws IOException {
 
-        validateFile(file);
-
         try {
-            // 1. S3 Key 생성 (경로 + UUID 파일명)
+            // S3 Key 생성 (경로 + UUID 파일명)
             String s3Key = s3KeyGenerator.generateS3Key(storagePath, file.getOriginalFilename());
 
-            // 2. 저장될 파일명 추출 (UUID 파일명)
-            String storedName = extractStoredName(s3Key);
-
-            // 3. S3 업로드 요청 생성
+            // S3 업로드 요청 생성
             PutObjectRequest putRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
                     .contentType(file.getContentType())
+                    .cacheControl("public, max-age=604800")
                     .build();
 
-            // 4. S3에 파일 업로드
+            // S3에 파일 업로드
             s3Client.putObject(putRequest, RequestBody.fromBytes(file.getBytes()));
             log.info("S3 파일 업로드 성공: bucket={}, key={}", bucketName, s3Key);
 
-            // 5. 공개 URL 생성 (CloudFront 우선)
+            // 공개 URL 생성 (CloudFront 우선)
             String publicUrl = generatePublicUrl(s3Key);
 
             // 6. S3UploadResult 반환 (비즈니스 로직에서 DB 저장 처리)
             return S3UploadResult.builder()
                     .originalName(file.getOriginalFilename())
-                    .storedName(storedName)
                     .s3Key(s3Key)
                     .url(publicUrl)
                     .contentType(file.getContentType())
@@ -228,6 +254,68 @@ public class S3FileServiceImpl implements S3FileService {
 
         s3Client.deleteObject(deleteRequest);
         log.info("S3 파일 삭제 성공: bucket={}, key={}", bucketName, s3Key);
+    }
+
+    /**
+     * S3에서 여러 파일 일괄 삭제 (1000개씩 분할 처리)
+     *
+     * @param s3Keys 삭제할 S3 Key 목록
+     * @return 삭제 성공한 S3 Key 목록
+     */
+    private List<String> deleteMultipleFromS3(List<String> s3Keys) {
+        List<String> allDeletedKeys = new ArrayList<>();
+        int batchSize = 1000; // AWS S3 제한
+
+        for (int i = 0; i < s3Keys.size(); i += batchSize) {
+            int endIndex = Math.min(i + batchSize, s3Keys.size());
+            List<String> batch = s3Keys.subList(i, endIndex);
+
+            try {
+                // ObjectIdentifier 목록 생성
+                List<ObjectIdentifier> objectIdentifiers = batch.stream()
+                        .map(key -> ObjectIdentifier.builder().key(key).build())
+                        .collect(Collectors.toList());
+
+                // DeleteObjectsRequest 생성
+                DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                        .bucket(bucketName)
+                        .delete(builder -> builder.objects(objectIdentifiers).quiet(false))
+                        .build();
+
+                // S3 멀티 삭제 실행
+                DeleteObjectsResponse response = s3Client.deleteObjects(deleteRequest);
+
+                // 성공한 파일 목록 수집
+                List<String> deletedKeys = response.deleted().stream()
+                        .map(DeletedObject::key)
+                        .toList();
+
+                allDeletedKeys.addAll(deletedKeys);
+
+                // 실패한 파일 로깅
+                if (response.hasErrors()) {
+                    response.errors().forEach(error ->
+                            log.error("S3 파일 삭제 실패: key={}, code={}, message={}",
+                                    error.key(), error.code(), error.message())
+                    );
+                }
+
+                log.info("S3 멀티 삭제 배치 완료: batch={}/{}, 성공={}, 실패={}",
+                        (i / batchSize) + 1,
+                        (s3Keys.size() + batchSize - 1) / batchSize,
+                        deletedKeys.size(),
+                        response.errors().size());
+
+            } catch (S3Exception e) {
+                log.error("S3 멀티 삭제 배치 실패: batch={}/{}, error={}",
+                        (i / batchSize) + 1,
+                        (s3Keys.size() + batchSize - 1) / batchSize,
+                        e.awsErrorDetails().errorMessage(), e);
+                // 배치 실패 시에도 계속 진행 (다음 배치 시도)
+            }
+        }
+
+        return allDeletedKeys;
     }
 
     /**
@@ -267,6 +355,68 @@ public class S3FileServiceImpl implements S3FileService {
         }
     }
 
+
+    /**
+     * CloudFront 멀티 캐시 무효화
+     *
+     * CloudFront는 한 번의 요청으로 최대 3,000개의 경로를 무효화할 수 있습니다.
+     * 와일드카드(*)를 사용하면 전체 무효화도 가능하지만, 명시적 경로 무효화가 더 안전합니다.
+     *
+     * @param s3Keys 캐시 무효화할 S3 Key 목록
+     */
+    private void invalidateMultipleCloudFrontCache(List<String> s3Keys) {
+        if (distributionId == null || distributionId.isBlank()) {
+            log.warn("CloudFront Distribution ID가 설정되지 않아 캐시 무효화를 건너뜁니다.");
+            return;
+        }
+
+        if (s3Keys == null || s3Keys.isEmpty()) {
+            log.info("캐시 무효화할 경로가 없음");
+            return;
+        }
+
+        try {
+            // S3 Key를 CloudFront 경로로 변환 (/로 시작)
+            List<String> paths = s3Keys.stream()
+                    .map(key -> "/" + key)
+                    .collect(Collectors.toList());
+
+            // CloudFront는 한 번에 최대 3,000개까지 지원하지만, 안전하게 1,000개씩 분할
+            int batchSize = 1000;
+            int totalBatches = (paths.size() + batchSize - 1) / batchSize;
+
+            for (int i = 0; i < paths.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, paths.size());
+                List<String> batchPaths = paths.subList(i, endIndex);
+
+                Paths invalidationPaths = Paths.builder()
+                        .items(batchPaths)
+                        .quantity(batchPaths.size())
+                        .build();
+
+                InvalidationBatch batch = InvalidationBatch.builder()
+                        .paths(invalidationPaths)
+                        .callerReference(String.valueOf(System.currentTimeMillis()) + "-" + i)
+                        .build();
+
+                CreateInvalidationRequest request = CreateInvalidationRequest.builder()
+                        .distributionId(distributionId)
+                        .invalidationBatch(batch)
+                        .build();
+
+                CreateInvalidationResponse response = cloudFrontClient.createInvalidation(request);
+
+                log.info("CloudFront 멀티 캐시 무효화 완료: batch={}/{}, invalidationId={}, paths={}",
+                        (i / batchSize) + 1, totalBatches,
+                        response.invalidation().id(), batchPaths.size());
+            }
+
+        } catch (Exception e) {
+            log.error("CloudFront 멀티 캐시 무효화 실패: {}", e.getMessage(), e);
+            // 캐시 무효화 실패는 치명적이지 않으므로 예외를 던지지 않음
+        }
+    }
+
     /**
      * 공개 URL 생성 (CloudFront 우선)
      */
@@ -284,86 +434,5 @@ public class S3FileServiceImpl implements S3FileService {
     private String extractStoredName(String s3Key) {
         int lastSlashIndex = s3Key.lastIndexOf('/');
         return lastSlashIndex != -1 ? s3Key.substring(lastSlashIndex + 1) : s3Key;
-    }
-
-    /* ========== 파일 검증 메서드 ============ */
-
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw S3CustomException.badRequest("파일이 비어있습니다.");
-        }
-        if (file.getOriginalFilename() == null || file.getOriginalFilename().isBlank()) {
-            throw S3CustomException.badRequest("파일명을 확인할 수 없습니다.");
-        }
-    }
-
-    private void validateImageFile(MultipartFile file) {
-        validateFile(file);
-        String extension = extractExtension(file.getOriginalFilename());
-        String mimeType = normalizeMimeType(file.getContentType());
-
-        if (!isImage(extension, mimeType)) {
-            throw S3CustomException.badRequest("이미지 파일이 아닙니다.");
-        }
-    }
-
-    private void validateVideoFile(MultipartFile file) {
-        validateFile(file);
-        String extension = extractExtension(file.getOriginalFilename());
-        String mimeType = normalizeMimeType(file.getContentType());
-
-        if (!isVideo(extension, mimeType)) {
-            throw S3CustomException.badRequest("동영상 파일이 아닙니다.");
-        }
-    }
-
-    private void validateDocumentFile(MultipartFile file) {
-        validateFile(file);
-        String extension = extractExtension(file.getOriginalFilename());
-        String mimeType = normalizeMimeType(file.getContentType());
-
-        if (!isDocument(extension, mimeType)) {
-            throw S3CustomException.badRequest("문서 파일이 아닙니다.");
-        }
-    }
-
-    private void validateAudioFile(MultipartFile file) {
-        validateFile(file);
-        String extension = extractExtension(file.getOriginalFilename());
-        String mimeType = normalizeMimeType(file.getContentType());
-
-        if (!isAudio(extension, mimeType)) {
-            throw S3CustomException.badRequest("오디오 파일이 아닙니다.");
-        }
-    }
-
-    private void validateArchiveFile(MultipartFile file) {
-        validateFile(file);
-        String extension = extractExtension(file.getOriginalFilename());
-        String mimeType = normalizeMimeType(file.getContentType());
-
-        if (!isArchive(extension, mimeType)) {
-            throw S3CustomException.badRequest("압축 파일이 아닙니다.");
-        }
-    }
-
-    private String extractExtension(String filename) {
-        if (filename == null || filename.isBlank()) {
-            return "";
-        }
-
-        int lastDotIndex = filename.lastIndexOf('.');
-        if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
-            return "";
-        }
-
-        return filename.substring(lastDotIndex + 1).toLowerCase();
-    }
-
-    private String normalizeMimeType(String contentType) {
-        if (contentType == null || contentType.isBlank()) {
-            return "";
-        }
-        return contentType.toLowerCase().split(";")[0].trim();
     }
 }

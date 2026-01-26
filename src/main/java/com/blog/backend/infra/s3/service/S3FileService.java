@@ -4,6 +4,7 @@ import com.blog.backend.infra.s3.dto.S3UploadResult;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * S3 파일 업로드/조회/삭제 기능을 제공하는 서비스 인터페이스
@@ -80,6 +81,26 @@ public interface S3FileService {
      * @param s3Key 삭제할 파일의 S3 Key
      */
     void deleteFile(String s3Key);
+
+    /**
+     * S3에 업로드된 여러 파일을 일괄 삭제하고 CloudFront 캐시도 무효화
+     *
+     * AWS S3의 DeleteObjectsRequest를 사용하여 한 번의 요청으로 최대 1,000개까지 삭제 가능
+     * 1,000개를 초과하는 경우 자동으로 분할 처리됨
+     *
+     * 장점:
+     * - 네트워크 왕복 시간(RTT) 최소화
+     * - API 요청 비용 절감
+     * - 삭제 속도 대폭 향상
+     *
+     * 트랜잭션 처리:
+     * - 일부 파일 삭제 실패 시 성공한 파일 목록만 반환
+     * - 호출자는 성공한 파일만 DB에서 삭제해야 함
+     *
+     * @param s3Keys 삭제할 파일들의 S3 Key 목록
+     * @return 삭제 성공한 S3 Key 목록 (실패한 파일은 제외됨)
+     */
+    List<String> deleteFiles(List<String> s3Keys);
 
     /**
      * S3에 Private로 업로드된 파일의 접근 가능한 Presigned URL을 생성

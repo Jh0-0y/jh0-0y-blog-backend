@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * PostFile 매핑 테이블 Repository
@@ -49,7 +50,7 @@ public interface PostFileRepository extends JpaRepository<PostFile, Long> {
      * @return 본문 파일 ID 목록
      */
     @Query("SELECT pf.fileId FROM PostFile pf WHERE pf.postId = :postId AND pf.fileType = :fileType")
-    List<Long> findFileIdsByPostIdAndFileType(@Param("postId") Long postId, @Param("fileType") PostFileType fileType);
+    Set<Long> findFileIdsByPostIdAndFileType(@Param("postId") Long postId, @Param("fileType") PostFileType fileType);
 
     /**
      * 특정 게시글의 모든 파일 ID 조회
@@ -58,7 +59,7 @@ public interface PostFileRepository extends JpaRepository<PostFile, Long> {
      * @return 파일 ID 목록
      */
     @Query("SELECT pf.fileId FROM PostFile pf WHERE pf.postId = :postId")
-    List<Long> findFileIdsByPostId(@Param("postId") Long postId);
+    Set<Long> findFileIdsByPostId(@Param("postId") Long postId);
 
     /**
      * 특정 파일이 어떤 게시글들에 연결되어 있는지 조회
@@ -127,4 +128,19 @@ public interface PostFileRepository extends JpaRepository<PostFile, Long> {
      * @return 존재 여부
      */
     boolean existsByPostIdAndFileId(Long postId, Long fileId);
+
+    /**
+     * 현재 사용 중인 모든 파일 ID 조회 (고아 파일 정리용)
+     *
+     * PostFile 테이블에 존재하는 모든 fileId를 중복 없이 반환합니다.
+     * 스케줄러에서 "사용 중인 파일" 합집합을 만들 때 사용됩니다.
+     *
+     * 성능 최적화:
+     * - DISTINCT로 중복 제거
+     * - idx_file_id 인덱스 활용
+     *
+     * @return 사용 중인 파일 ID 목록 (중복 제거됨)
+     */
+    @Query("SELECT DISTINCT pf.fileId FROM PostFile pf")
+    List<Long> findAllUsedFileIds();
 }

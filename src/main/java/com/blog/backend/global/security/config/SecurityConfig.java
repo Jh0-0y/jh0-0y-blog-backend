@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers("/api/auth/**").permitAll()           // 로그인, 회원가입
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()  // 게시글 조회
+                        .requestMatchers(HttpMethod.GET, "/api/public/posts/**").permitAll()  // 게시글 조회
                         .requestMatchers(HttpMethod.GET, "/api/stacks/**").permitAll()   // 스택 조회
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()

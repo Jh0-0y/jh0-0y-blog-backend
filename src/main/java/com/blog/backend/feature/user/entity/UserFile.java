@@ -1,4 +1,4 @@
-package com.blog.backend.feature.auth.entity;
+package com.blog.backend.feature.user.entity;
 
 import com.blog.backend.global.core.entity.BaseTimeEntity;
 import jakarta.persistence.*;

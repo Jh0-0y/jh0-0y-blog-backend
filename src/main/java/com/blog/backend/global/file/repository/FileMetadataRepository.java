@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 파일 메타데이터 Repository
@@ -26,13 +27,44 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadata, Long
      *
      * @param thresholdTime 기준 시간 (이 시간 이전에 생성된 파일)
      * @return 삭제 대상 고아 파일 목록
+     * @deprecated 합집합-차집합 전략으로 대체됨. findUnusedFiles() 사용 권장
      */
+    @Deprecated
     @Query("SELECT f FROM FileMetadata f " +
             "WHERE f.createdAt < :thresholdTime " +
             "AND NOT EXISTS (" +
             "   SELECT 1 FROM PostFile pf WHERE pf.fileId = f.id" +
             ")")
     List<FileMetadata> findOrphanFiles(@Param("thresholdTime") LocalDateTime thresholdTime);
+
+    /**
+     * 사용되지 않는 파일 조회 (합집합-차집합 전략)
+     *
+     * 동작 방식:
+     * 1. 모든 도메인에서 "사용 중인 파일 ID" 수집 (PostFile, UserFile 등)
+     * 2. 수집된 ID들을 합집합으로 생성
+     * 3. 전체 파일 중 합집합에 포함되지 않은 파일 조회
+     *
+     * 장점:
+     * - 확장성: 새로운 중간 테이블 추가 시 쿼리 수정 불필요
+     * - 명확성: "사용 중"의 정의가 명확함
+     * - 안전성: 빈 Set 체크로 실수 방지
+     *
+     * 주의사항:
+     * - usedFileIds가 빈 Set이면 모든 파일이 반환되므로 호출 전 체크 필수
+     * - usedFileIds가 1000개 이상이면 분할 처리 권장 (IN 절 제한)
+     *
+     * @param usedFileIds 사용 중인 파일 ID 집합 (빈 Set이면 안 됨)
+     * @param thresholdTime 기준 시간 (이 시간 이전에 생성된 파일만 대상)
+     * @return 사용되지 않는 파일 목록
+     */
+    @Query("SELECT f FROM FileMetadata f " +
+            "WHERE f.createdAt < :thresholdTime " +
+            "AND f.id NOT IN :usedFileIds")
+    List<FileMetadata> findUnusedFiles(
+            @Param("usedFileIds") Set<Long> usedFileIds,
+            @Param("thresholdTime") LocalDateTime thresholdTime
+    );
 
     /**
      * 여러 파일 ID로 파일 메타데이터 조회

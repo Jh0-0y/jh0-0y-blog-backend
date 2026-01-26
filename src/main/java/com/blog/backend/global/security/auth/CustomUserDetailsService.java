@@ -1,7 +1,7 @@
 package com.blog.backend.global.security.auth;
 
-import com.blog.backend.feature.auth.entity.User;
-import com.blog.backend.feature.auth.repository.UserRepository;
+import com.blog.backend.feature.user.entity.User;
+import com.blog.backend.feature.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

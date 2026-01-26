@@ -1,11 +1,11 @@
-package com.blog.backend.feature.auth.controller;
+package com.blog.backend.feature.user.controller;
 
-import com.blog.backend.feature.auth.dto.UserRequest;
-import com.blog.backend.feature.auth.service.AuthService;
+import com.blog.backend.feature.user.dto.UserRequest;
+import com.blog.backend.feature.user.service.UserService;
 import com.blog.backend.global.core.response.ApiResponse;
 import com.blog.backend.global.core.exception.CustomException;
 import com.blog.backend.global.security.auth.CustomUserDetails;
-import com.blog.backend.feature.auth.dto.UserResponse;
+import com.blog.backend.feature.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final AuthService authService;
+    private final UserService userService;
 
     /**
      * 내 정보 조회
@@ -28,7 +28,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse.UserInfo>> getMe(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        UserResponse.UserInfo response = authService.getMe(userDetails.getUserId());
+        UserResponse.UserInfo response = userService.getMe(userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -41,26 +41,19 @@ public class UserController {
     @PatchMapping("/profile")
     public ResponseEntity<ApiResponse<UserResponse.UserInfo>> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestPart(required = false) @Valid UserRequest.UpdateProfileRequest request,
-            @RequestPart(required = false) MultipartFile profileImage
+            @RequestPart(required = false) @Valid UserRequest.UpdateProfileRequest request
     ) {
-        try {
-            // 닉네임과 이미지 둘 다 없으면 에러
-            if ((request == null || request.getNickname() == null || request.getNickname().isBlank())
-                    && (profileImage == null || profileImage.isEmpty())) {
-                throw CustomException.badRequest("수정할 정보를 입력해주세요");
-            }
-
-            UserResponse.UserInfo response = authService.updateProfile(
-                    userDetails.getUserId(),
-                    request,
-                    profileImage
-            );
-
-            return ResponseEntity.ok(ApiResponse.success(response, "프로필이 수정되었습니다"));
-        } catch (java.io.IOException e) {
-            throw CustomException.badRequest("파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
+        if ((request == null || request.getNickname() == null || request.getNickname().isBlank())
+                && (request.getProfileImageUrl() == null || request.getProfileImageUrl().isEmpty())) {
+            throw CustomException.badRequest("수정할 정보를 입력해주세요");
         }
+
+        UserResponse.UserInfo response = userService.updateProfile(
+                userDetails.getUserId(),
+                request
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response, "프로필이 수정되었습니다"));
     }
 
     /**
@@ -73,7 +66,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UserRequest.ChangePasswordRequest request
     ) {
-        authService.changePassword(userDetails.getUserId(), request);
+        userService.changePassword(userDetails.getUserId(), request);
         return ResponseEntity.ok(ApiResponse.success(null, "비밀번호가 변경되었습니다"));
     }
 }

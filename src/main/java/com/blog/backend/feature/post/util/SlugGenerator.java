@@ -1,8 +1,7 @@
-package com.blog.backend.feature.post.utils;
+package com.blog.backend.feature.post.util;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 /**

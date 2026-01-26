@@ -1,4 +1,4 @@
-package com.blog.backend.feature.auth.entity;
+package com.blog.backend.feature.user.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
