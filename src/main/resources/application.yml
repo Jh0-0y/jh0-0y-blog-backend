@@ -54,7 +54,7 @@ spring:
                 access-key: ${AWS_ACCESS_KEY}
                 secret-key: ${AWS_SECRET_KEY}
             region:
-                static: ap-northeast-2
+                static: ${AWS_REGION}
             s3:
                 bucket: ${AWS_BUCKET}
             cloudfront:
@@ -83,10 +83,10 @@ logging:
 # Front Server URL
 app:
     origin:
-        frontend: ${FRONT_ORIGIN}
+        frontend: ${FRONT_ORIGIN:http://localhost:5173}
     cookie:
-        domain: localhost
-        secure: false
+        secure: ${COOKIE_IS_SECURE:false}
+        sameSite: ${COOKIE_SAMESITE:Lax}
 
 # JWT
 jwt:

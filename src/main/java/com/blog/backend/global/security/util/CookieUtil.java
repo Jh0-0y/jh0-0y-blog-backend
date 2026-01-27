@@ -19,14 +19,16 @@ public class CookieUtil {
     @Value("${jwt.refresh-token-validity}")
     private long refreshTokenValidity;
 
-    @Value("${app.cookie.domain:localhost}")
-    private String cookieDomain;
-
     @Value("${app.cookie.secure:false}")
-    private boolean secureCookie;
+    private boolean isSecure;
+
+    @Value("${app.cookie.sameSite:Lax}")
+    private String sameSite;
 
     private static final String ACCESS_TOKEN_NAME = "access_token";
+    private static final String ACCESS_TOKEN_PATH = "/";
     private static final String REFRESH_TOKEN_NAME = "refresh_token";
+    private static final String REFRESH_TOKEN_PATH = "/api/auth";
 
     /**
      * Access Token 쿠키 생성
@@ -34,11 +36,10 @@ public class CookieUtil {
     public void addAccessTokenCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from(ACCESS_TOKEN_NAME, token)
                 .httpOnly(true)
-                .secure(secureCookie)
-                .path("/")
-                .maxAge(accessTokenValidity / 1000) // ms → seconds
-                //.sameSite("Strict")
-                .sameSite("Lax")
+                .secure(isSecure)
+                .path(ACCESS_TOKEN_PATH)
+                .maxAge(accessTokenValidity / 1000)
+                .sameSite(sameSite)
                 .build();
 
         response.addHeader("Set-Cookie", cookie.toString());
@@ -50,11 +51,10 @@ public class CookieUtil {
     public void addRefreshTokenCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_NAME, token)
                 .httpOnly(true)
-                .secure(secureCookie)
-                .path("/")
+                .secure(isSecure)
+                .path(REFRESH_TOKEN_PATH)
                 .maxAge(refreshTokenValidity / 1000)
-                //.sameSite("Strict")
-                .sameSite("Lax")
+                .sameSite(sameSite)
                 .build();
 
         response.addHeader("Set-Cookie", cookie.toString());
@@ -66,18 +66,18 @@ public class CookieUtil {
     public void deleteTokenCookies(HttpServletResponse response) {
         ResponseCookie accessCookie = ResponseCookie.from(ACCESS_TOKEN_NAME, "")
                 .httpOnly(true)
-                .secure(secureCookie)
-                .path("/")
+                .secure(isSecure)
+                .path(ACCESS_TOKEN_PATH)
                 .maxAge(0)
-                .sameSite("Strict")
+                .sameSite(sameSite)
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, "")
                 .httpOnly(true)
-                .secure(secureCookie)
-                .path("/api/auth/refresh")
+                .secure(isSecure)
+                .path(REFRESH_TOKEN_PATH)
                 .maxAge(0)
-                .sameSite("Strict")
+                .sameSite(sameSite)
                 .build();
 
         response.addHeader("Set-Cookie", accessCookie.toString());

@@ -3,6 +3,7 @@ package com.blog.backend.global.security.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -143,19 +144,5 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-    }
-
-    /**
-     * Access Token 유효시간 반환 (ms)
-     */
-    public long getAccessTokenValidity() {
-        return accessTokenValidity;
-    }
-
-    /**
-     * Refresh Token 유효시간 반환 (ms)
-     */
-    public long getRefreshTokenValidity() {
-        return refreshTokenValidity;
     }
 }
