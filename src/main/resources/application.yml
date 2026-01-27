@@ -1,6 +1,6 @@
 spring:
     application:
-        name: backend
+        name: sealog-backend
 
     # REST Base Path
     data:
@@ -25,7 +25,7 @@ spring:
         show-sql: false
         hibernate:
             # create, create-drop, update, validate, none
-            ddl-auto: create
+            ddl-auto: ${JPA_HIBERNATE_DDL}
         properties:
             hibernate:
                 format_sql: true
@@ -63,7 +63,7 @@ spring:
 
 # Server Port
 server:
-    port: 8080
+    port: ${SERVER_PORT}
 
 # SQL Logging
 logging:
@@ -83,14 +83,13 @@ logging:
 # Front Server URL
 app:
     origin:
-        frontend: https://jh0-0y.github.io/
+        frontend: ${FRONT_ORIGIN}
     cookie:
         domain: localhost
         secure: false
+
 # JWT
 jwt:
     secret: ${JWT_KEY}
-    # 30min = 30 * 60 * 1000(ms)
-    access-token-validity: 1800000
-    # 7day = 7 * 24 * 60 * 60 * 1000(ms)
-    refresh-token-validity: 604800000
+    access-token-validity: ${JWT_ACCESS_TTL}
+    refresh-token-validity: ${JWT_REFRESH_TTL}

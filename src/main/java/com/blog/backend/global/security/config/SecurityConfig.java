@@ -66,7 +66,7 @@ public class SecurityConfig {
                         })
                 )
                 // URL별 접근 권한 설정
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(authorize -> authorize
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers("/api/auth/**").permitAll()           // 로그인, 회원가입
                         .requestMatchers(HttpMethod.GET, "/api/public/posts/**").permitAll()  // 게시글 조회
@@ -93,7 +93,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 frontOrigin,                // frontend origin
                 "http://localhost:5173",    // Vite 개발 서버
-                "http://localhost:3000"     // 기타 개발 서버
+                "http://localhost:3000"     // React 개발 서버
         ));
         // 허용할 HTTP 메서드
         configuration.setAllowedMethods(List.of(

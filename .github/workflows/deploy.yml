@@ -38,5 +38,15 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/app
-            mv *.jar new-blog.jar
-            bash /home/ubuntu/deploy.sh
+          
+            # @v가 포함된 가장 최신 jar 파일을 찾음
+            NEW_JAR=$(ls -t sealog@v*.jar | head -1)
+          
+            # 심볼릭 링크 생성
+            ln -sfn "$NEW_JAR" sealog.jar
+          
+            # 서비스 재시작
+            sudo systemctl restart sealog
+          
+            # 파일 정리(최신 3개를 제외한 모든 파일 삭제)
+            ls -t sealog@v*.jar | tail -n +4 | xargs -I {} rm {}
