@@ -6,7 +6,7 @@ import com.blog.backend.global.file.entity.FileMetadata;
 import com.blog.backend.global.file.service.FileMetadataService;
 import com.blog.backend.global.file.util.FileValidator;
 import com.blog.backend.infra.s3.dto.S3UploadResult;
-import com.blog.backend.infra.s3.service.S3FileService;
+import com.blog.backend.infra.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +27,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class FileUploadController {
 
-    private final S3FileService s3FileService;
+    private final S3Service s3Service;
     private final FileMetadataService fileMetadataService;
 
     /**
@@ -55,9 +55,10 @@ public class FileUploadController {
         FileValidator.validateFile(file);
         log.info("파일 검증 완료: filename={}", file.getOriginalFilename());
 
-        // 2. S3 업로드 (타입별 경로 자동 분류)
-        S3UploadResult uploadResult = s3FileService.uploadFile(file);
-        log.info("S3 업로드 완료: s3Key={}, url={}", uploadResult.s3Key(), uploadResult.url());
+        // 2. 업로드 (타입별 경로 자동 분류)
+        S3UploadResult uploadResult = s3Service.uploadFile(file);
+        log.info("업로드 완료: originalName={} path={} contentType={}",
+                uploadResult.originalName(), uploadResult.path(), uploadResult.contentType());
 
         // 3. FileMetadata 저장
         FileMetadata fileMetadata = fileMetadataService.saveFileMetadata(uploadResult);
@@ -65,7 +66,7 @@ public class FileUploadController {
 
         // 4. 응답 반환
         FileUploadResponse response = FileUploadResponse.from(fileMetadata);
-        log.info("파일 업로드 성공: fileId={}, url={}", response.id(), response.url());
+        log.info("파일 업로드 성공: fileId={}, path={}", response.id(), response.path());
 
         return ResponseEntity.ok(ApiResponse.success(response, "파일이 업로드되었습니다"));
     }

@@ -11,6 +11,23 @@ import java.util.List;
 public class PostResponse {
 
     /**
+     * 작성자 정보
+     */
+    @Getter
+    @Builder
+    public static class AuthorInfo {
+        private String nickname;
+        private String profileImagePath;
+
+        public static AuthorInfo of(String nickname, String profileImageUrl) {
+            return AuthorInfo.builder()
+                    .nickname(nickname)
+                    .profileImagePath(profileImageUrl)
+                    .build();
+        }
+    }
+
+    /**
      * 게시글 목록 응답 (요약 정보)
      */
     @Getter
@@ -23,9 +40,10 @@ public class PostResponse {
         private String excerpt;
         private PostType postType;
         private PostStatus status;
-        private String thumbnailUrl;
+        private String thumbnailPath;
         private List<String> tags;
         private List<String> stacks;
+        private AuthorInfo author;
         private LocalDateTime createdAt;
 
         /**
@@ -39,9 +57,10 @@ public class PostResponse {
                 String excerpt,
                 PostType postType,
                 PostStatus status,
-                String thumbnailUrl,
+                String thumbnailPath,
                 List<String> tags,
                 List<String> stacks,
+                AuthorInfo author,
                 LocalDateTime createdAt
         ) {
             return PostItems.builder()
@@ -51,9 +70,10 @@ public class PostResponse {
                     .excerpt(excerpt)
                     .postType(postType)
                     .status(status)
-                    .thumbnailUrl(thumbnailUrl)
+                    .thumbnailPath(thumbnailPath)
                     .tags(tags)
                     .stacks(stacks)
+                    .author(author)
                     .createdAt(createdAt)
                     .build();
         }
@@ -73,9 +93,10 @@ public class PostResponse {
         private PostType postType;
         private String content;
         private PostStatus status;
-        private String thumbnailUrl;
+        private String thumbnailPath;
         private List<String> tags;
         private List<String> stacks;
+        private AuthorInfo author;
         private List<PostItems> relatedPosts;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -92,9 +113,10 @@ public class PostResponse {
                 PostType postType,
                 String content,
                 PostStatus status,
-                String thumbnailUrl,
+                String thumbnailPath,
                 List<String> tags,
                 List<String> stacks,
+                AuthorInfo author,
                 List<PostItems> relatedPosts,
                 LocalDateTime createdAt,
                 LocalDateTime updatedAt
@@ -107,9 +129,10 @@ public class PostResponse {
                     .postType(postType)
                     .content(content)
                     .status(status)
-                    .thumbnailUrl(thumbnailUrl)
+                    .thumbnailPath(thumbnailPath)
                     .tags(tags)
                     .stacks(stacks)
+                    .author(author)
                     .relatedPosts(relatedPosts != null ? relatedPosts : List.of())
                     .createdAt(createdAt)
                     .updatedAt(updatedAt)
@@ -133,7 +156,7 @@ public class PostResponse {
         private PostType postType;
         private String content;
         private PostStatus status;
-        private String thumbnailUrl;
+        private String thumbnailPath;
         private List<String> tags;
         private List<String> stacks;
         private LocalDateTime createdAt;
@@ -147,7 +170,7 @@ public class PostResponse {
                 PostType postType,
                 String content,
                 PostStatus status,
-                String thumbnailUrl,
+                String thumbnailPath,
                 List<String> tags,
                 List<String> stacks,
                 LocalDateTime createdAt,
@@ -161,7 +184,7 @@ public class PostResponse {
                     .postType(postType)
                     .content(content)
                     .status(status)
-                    .thumbnailUrl(thumbnailUrl)
+                    .thumbnailPath(thumbnailPath)
                     .tags(tags)
                     .stacks(stacks)
                     .createdAt(createdAt)

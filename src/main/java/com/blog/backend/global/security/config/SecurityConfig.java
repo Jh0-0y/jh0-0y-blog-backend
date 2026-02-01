@@ -68,9 +68,12 @@ public class SecurityConfig {
                 // URL별 접근 권한 설정
                 .authorizeHttpRequests(authorize -> authorize
                         // 인증 없이 접근 가능한 경로
-                        .requestMatchers("/api/auth/**").permitAll()           // 로그인, 회원가입
-                        .requestMatchers(HttpMethod.GET, "/api/public/posts/**").permitAll()  // 게시글 조회
-                        .requestMatchers(HttpMethod.GET, "/api/stacks/**").permitAll()   // 스택 조회
+                        .requestMatchers("/api/auth/**").permitAll()
+//                      .requestMatchers("/api/admin/auth/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/stacks/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/user/**").permitAll()
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )

@@ -23,7 +23,7 @@ public class PostSpecification {
     /**
      * 공개 게시글 복합 검색 조건 (PUBLISHED만)
      *
-     * @param condition 검색 조건 (postType, stackName, keyword)
+     * @param condition 검색 조건 (nickname, postType, stackName, keyword)
      * @return Specification
      */
     public static Specification<Post> withCondition(PostSearchCondition condition) {
@@ -32,6 +32,11 @@ public class PostSpecification {
 
             // 공개된 게시글만 (필수)
             predicates.add(cb.equal(root.get("status"), PostStatus.PUBLISHED));
+
+            // 작성자 닉네임 필터
+            if (condition.getNickname() != null && !condition.getNickname().isBlank()) {
+                predicates.add(cb.equal(root.get("user").get("nickname"), condition.getNickname()));
+            }
 
             // 게시글 타입 필터
             if (condition.getPostType() != null) {

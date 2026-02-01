@@ -77,7 +77,7 @@ public class MyPostServiceImpl implements MyPostService{
 
         // 썸네일 처리 (사전 업로드된 파일)
         if (request.getThumbnailFileId() != null) {
-            handleThumbnailFromPreUpload(savedPost, request.getThumbnailFileId(), request.getThumbnailUrl());
+            handleThumbnailFromPreUpload(savedPost, request.getThumbnailFileId(), request.getThumbnailPath());
         }
 
         // 본문 파일 매핑 생성 (본문에서 파싱)
@@ -108,7 +108,7 @@ public class MyPostServiceImpl implements MyPostService{
                 post.getPostType(),
                 post.getContent(),
                 post.getStatus(),
-                post.getThumbnailUrl(),
+                post.getThumbnailPath(),
                 tags,
                 stackNames,
                 post.getCreatedAt(),
@@ -223,6 +223,12 @@ public class MyPostServiceImpl implements MyPostService{
                 ? new ArrayList<>(post.getTags())
                 : new ArrayList<>();
 
+        // 작성자 정보 생성
+        PostResponse.AuthorInfo author = PostResponse.AuthorInfo.of(
+                post.getUser().getNickname(),
+                post.getUser().getProfileImagePath()
+        );
+
         return PostResponse.PostItems.of(
                 post.getId(),
                 post.getSlug(),
@@ -230,9 +236,10 @@ public class MyPostServiceImpl implements MyPostService{
                 post.getExcerpt(),
                 post.getPostType(),
                 post.getStatus(),
-                post.getThumbnailUrl(),
+                post.getThumbnailPath(),
                 tags,
                 stackNames,
+                author,
                 post.getCreatedAt()
         );
     }
@@ -246,6 +253,12 @@ public class MyPostServiceImpl implements MyPostService{
                 ? new ArrayList<>(post.getTags())
                 : new ArrayList<>();
 
+        // 작성자 정보 생성
+        PostResponse.AuthorInfo author = PostResponse.AuthorInfo.of(
+                post.getUser().getNickname(),
+                post.getUser().getProfileImagePath()
+        );
+
         return PostResponse.Detail.of(
                 post.getId(),
                 post.getSlug(),
@@ -254,9 +267,10 @@ public class MyPostServiceImpl implements MyPostService{
                 post.getPostType(),
                 post.getContent(),
                 post.getStatus(),
-                post.getThumbnailUrl(),
+                post.getThumbnailPath(),
                 tags,
                 stackNames,
+                author,
                 List.of(), // 내 게시글 조회 시에는 관련 게시글 불필요
                 post.getCreatedAt(),
                 post.getUpdatedAt()
@@ -312,7 +326,7 @@ public class MyPostServiceImpl implements MyPostService{
         postFileService.saveThumbnailMapping(post.getId(), thumbnailFileId);
         post.updateThumbnailUrl(thumbnailUrl);
 
-        log.info("게시글 생성 - 썸네일 처리 완료: postId={}, url={}", post.getId(), thumbnailUrl);
+        log.info("게시글 생성 - 썸네일 처리 완료: postId={}, path={}", post.getId(), thumbnailUrl);
     }
 
     private void handleThumbnailUpdate(Post post, PostRequest.Update request) {
@@ -320,7 +334,7 @@ public class MyPostServiceImpl implements MyPostService{
             fileMetadataService.validateFilesExist(List.of(request.getThumbnailFileId()));
             postFileService.deleteExistingThumbnail(post.getId());
             postFileService.saveThumbnailMapping(post.getId(), request.getThumbnailFileId());
-            post.updateThumbnailUrl(request.getThumbnailUrl());
+            post.updateThumbnailUrl(request.getThumbnailPath());
             return;
         }
 

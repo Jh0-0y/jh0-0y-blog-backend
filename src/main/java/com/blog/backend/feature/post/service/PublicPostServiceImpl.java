@@ -5,9 +5,8 @@ import com.blog.backend.feature.post.dto.PostSearchCondition;
 import com.blog.backend.feature.post.entity.Post;
 import com.blog.backend.feature.post.repository.PostRepository;
 import com.blog.backend.feature.post.repository.PostSpecification;
+import com.blog.backend.feature.post.strategy.PostSearchStrategy;
 import com.blog.backend.feature.stack.entity.Stack;
-import com.blog.backend.feature.user.entity.User;
-import com.blog.backend.feature.user.repository.UserRepository;
 import com.blog.backend.global.core.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,15 +33,20 @@ import java.util.stream.Collectors;
 public class PublicPostServiceImpl implements PublicPostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final PostSearchStrategy postSearchStrategy;
 
     /**
-     * 게시글 상세 조회 (Slug 기반)
+     * 게시글 상세 조회 (Nickname + Slug 기반)
      */
     @Override
-    public PostResponse.Detail getPostBySlug(String slug) {
+    public PostResponse.Detail getPostByNicknameAndSlug(String nickname, String slug) {
         Post post = postRepository.findBySlugWithStacks(slug)
                 .orElseThrow(() -> CustomException.notFound("게시글을 찾을 수 없습니다"));
+
+        // 작성자 검증
+        if (!post.getUser().getNickname().equals(nickname)) {
+            throw CustomException.notFound("해당 사용자의 게시글이 아닙니다");
+        }
 
         return buildPostDetailResponse(post);
     }
@@ -57,21 +61,11 @@ public class PublicPostServiceImpl implements PublicPostService {
     }
 
     /**
-     * 특정 사용자의 공개 게시글 조회
+     * 자동완성 검색
      */
     @Override
-    public Page<PostResponse.PostItems> getUserPublicPosts(String nickname, Pageable pageable) {
-        PostSearchCondition condition = PostSearchCondition.builder()
-                .build();
-
-        User user = userRepository.findByNickname(nickname)
-                .orElseThrow(() -> CustomException.notFound("사용자가 존재하지 않습니다."));
-
-        return postRepository.findAll(
-                PostSpecification.withUserAndCondition(user.getId(), condition)
-                        .and(PostSpecification.publishedOnly()),
-                pageable
-        ).map(this::buildPostItemsResponse);
+    public List<PostResponse.PostItems> autocomplete(String keyword) {
+        return postSearchStrategy.autocomplete(keyword, 5);
     }
 
     // ========== DTO 빌더 메서드 ========== //
@@ -85,6 +79,12 @@ public class PublicPostServiceImpl implements PublicPostService {
                 ? new ArrayList<>(post.getTags())
                 : new ArrayList<>();
 
+        // 작성자 정보 생성
+        PostResponse.AuthorInfo author = PostResponse.AuthorInfo.of(
+                post.getUser().getNickname(),
+                post.getUser().getProfileImagePath()
+        );
+
         return PostResponse.PostItems.of(
                 post.getId(),
                 post.getSlug(),
@@ -92,9 +92,10 @@ public class PublicPostServiceImpl implements PublicPostService {
                 post.getExcerpt(),
                 post.getPostType(),
                 post.getStatus(),
-                post.getThumbnailUrl(),
+                post.getThumbnailPath(),
                 tags,
                 stackNames,
+                author,
                 post.getCreatedAt()
         );
     }
@@ -107,6 +108,12 @@ public class PublicPostServiceImpl implements PublicPostService {
         List<String> tags = post.getTags() != null
                 ? new ArrayList<>(post.getTags())
                 : new ArrayList<>();
+
+        // 작성자 정보 생성
+        PostResponse.AuthorInfo author = PostResponse.AuthorInfo.of(
+                post.getUser().getNickname(),
+                post.getUser().getProfileImagePath()
+        );
 
         // 관련 게시글 조회 및 DTO 변환
         List<Post> relatedPosts = getRelatedPosts(post);
@@ -122,9 +129,10 @@ public class PublicPostServiceImpl implements PublicPostService {
                 post.getPostType(),
                 post.getContent(),
                 post.getStatus(),
-                post.getThumbnailUrl(),
+                post.getThumbnailPath(),
                 tags,
                 stackNames,
+                author,
                 relatedPostItems,
                 post.getCreatedAt(),
                 post.getUpdatedAt()

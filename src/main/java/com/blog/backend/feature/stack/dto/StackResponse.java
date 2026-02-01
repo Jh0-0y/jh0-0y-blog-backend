@@ -15,14 +15,14 @@ public class StackResponse {
      */
     @Getter
     @Builder
-    public static class Response {
+    public static class StackItem {
 
         private Long id;
         private String name;
         private StackGroup stackGroup;
 
-        public static Response from(Stack stack) {
-            return Response.builder()
+        public static StackItem from(Stack stack) {
+            return StackItem.builder()
                     .id(stack.getId())
                     .name(stack.getName())
                     .stackGroup(stack.getStackGroup())

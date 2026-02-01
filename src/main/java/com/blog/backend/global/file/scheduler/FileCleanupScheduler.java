@@ -3,7 +3,7 @@ package com.blog.backend.global.file.scheduler;
 import com.blog.backend.global.file.collector.FileUsageCollector;
 import com.blog.backend.global.file.entity.FileMetadata;
 import com.blog.backend.global.file.service.FileMetadataService;
-import com.blog.backend.infra.s3.service.S3FileService;
+import com.blog.backend.infra.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FileCleanupScheduler {
 
-    private final S3FileService s3FileService;
+    private final S3Service s3Service;
     private final FileMetadataService fileMetadataService;
     private final List<FileUsageCollector> fileUsageCollectors;
 
@@ -71,10 +71,10 @@ public class FileCleanupScheduler {
 
             // 3. S3에서 파일 멀티 삭제 (성공한 것만 반환)
             List<String> s3Keys = unusedFiles.stream()
-                    .map(FileMetadata::getS3Key)
+                    .map(FileMetadata::getPath)
                     .collect(Collectors.toList());
 
-            List<String> deletedS3Keys = s3FileService.deleteFiles(s3Keys);
+            List<String> deletedS3Keys = s3Service.deleteFiles(s3Keys);
 
             if (deletedS3Keys.isEmpty()) {
                 log.warn("=== S3 파일 삭제가 모두 실패했습니다 ===");
@@ -84,7 +84,7 @@ public class FileCleanupScheduler {
             // 4. S3 삭제 성공한 파일의 ID 추출
             Set<String> deletedS3KeySet = new HashSet<>(deletedS3Keys);
             List<Long> fileIdsToDelete = unusedFiles.stream()
-                    .filter(file -> deletedS3KeySet.contains(file.getS3Key()))
+                    .filter(file -> deletedS3KeySet.contains(file.getPath()))
                     .map(FileMetadata::getId)
                     .collect(Collectors.toList());
 
@@ -105,9 +105,9 @@ public class FileCleanupScheduler {
      *
      * 현재 구현된 컬렉터:
      * - PostFileService: 게시글에서 사용 중인 파일
-     *
-     * 향후 추가 예정:
      * - UserFileService: 사용자 프로필 등에서 사용 중인 파일
+     *
+     * 향후 추가 예정
      * - CommentFileService: 댓글에서 사용 중인 파일
      *
      * @return 사용 중인 파일 ID 합집합

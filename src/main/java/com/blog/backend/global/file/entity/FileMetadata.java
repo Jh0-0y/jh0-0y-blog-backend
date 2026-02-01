@@ -38,13 +38,7 @@ public class FileMetadata extends BaseTimeEntity {
      * S3 전체 경로 (버킷 제외)
      */
     @Column(nullable = false, length = 500)
-    private String s3Key;
-
-    /**
-     * 파일 접근 URL (CloudFront 또는 S3 Public URL)
-     */
-    @Column(nullable = false, length = 1000)
-    private String url;
+    private String path;
 
     /**
      * MIME 타입
@@ -62,14 +56,12 @@ public class FileMetadata extends BaseTimeEntity {
     @Builder
     public FileMetadata(
             String originalName,
-            String s3Key,
-            String url,
+            String path,
             String contentType,
             Long size
     ) {
         this.originalName = originalName;
-        this.s3Key = s3Key;
-        this.url = url;
+        this.path = path;
         this.contentType = contentType;
         this.size = size;
     }

@@ -7,7 +7,7 @@ import lombok.Builder;
 public record FileUploadResponse(
         Long id,
         String originalName,
-        String url,
+        String path,
         Long size,
         String contentType
 ) {
@@ -15,7 +15,7 @@ public record FileUploadResponse(
         return FileUploadResponse.builder()
                 .id(fileMetadata.getId())
                 .originalName(fileMetadata.getOriginalName())
-                .url(fileMetadata.getUrl())
+                .path(fileMetadata.getPath())
                 .size(fileMetadata.getSize())
                 .contentType(fileMetadata.getContentType())
                 .build();

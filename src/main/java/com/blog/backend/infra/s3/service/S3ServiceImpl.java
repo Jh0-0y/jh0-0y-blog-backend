@@ -40,7 +40,7 @@ import static com.blog.backend.infra.s3.util.S3FileTypeResolver.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class S3FileServiceImpl implements S3FileService {
+public class S3ServiceImpl implements S3Service {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
@@ -116,7 +116,7 @@ public class S3FileServiceImpl implements S3FileService {
             PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignRequest);
             String presignedUrl = presigned.url().toString();
 
-            log.info("Presigned URL 생성 완료: s3Key={}, 유효시간={}분", s3Key, minutes);
+            log.info("Presigned URL 생성 완료: path={}, 유효시간={}분", s3Key, minutes);
             return presignedUrl;
 
         } catch (S3Exception e) {
@@ -142,7 +142,7 @@ public class S3FileServiceImpl implements S3FileService {
             // 2. CloudFront 캐시 무효화
             invalidateCloudFrontCache(s3Key);
 
-            log.info("파일 삭제 및 캐시 무효화 완료: s3Key={}", s3Key);
+            log.info("파일 삭제 및 캐시 무효화 완료: path={}", s3Key);
 
         } catch (S3Exception e) {
             log.error("S3 파일 삭제 실패: key={}, error={}", s3Key, e.awsErrorDetails().errorMessage(), e);
@@ -219,14 +219,10 @@ public class S3FileServiceImpl implements S3FileService {
             s3Client.putObject(putRequest, RequestBody.fromBytes(file.getBytes()));
             log.info("S3 파일 업로드 성공: bucket={}, key={}", bucketName, s3Key);
 
-            // 공개 URL 생성 (CloudFront 우선)
-            String publicUrl = generatePublicUrl(s3Key);
-
-            // 6. S3UploadResult 반환 (비즈니스 로직에서 DB 저장 처리)
+            // S3UploadResult 반환 (비즈니스 로직에서 DB 저장 처리)
             return S3UploadResult.builder()
                     .originalName(file.getOriginalFilename())
-                    .s3Key(s3Key)
-                    .url(publicUrl)
+                    .path(s3Key)
                     .contentType(file.getContentType())
                     .fileSize(file.getSize())
                     .build();

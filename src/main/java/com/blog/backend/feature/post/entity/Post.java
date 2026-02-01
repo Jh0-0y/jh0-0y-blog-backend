@@ -55,13 +55,13 @@ public class Post extends BaseTimeEntity {
     private PostStatus status;
 
     /**
-     * 썸네일 URL (Denormalization - 조회 성능 최적화)
+     * 썸네일 Path (Denormalization - 조회 성능 최적화)
      * - PostFile 테이블에도 매핑 정보 저장 (파일 추적용)
-     * - URL은 빠른 조회를 위해 중복 저장
+     * - Path는 빠른 조회를 위해 중복 저장
      * - null 허용 (썸네일 없는 게시글 가능)
      */
-    @Column(name = "thumbnail_url", length = 1000)
-    private String thumbnailUrl;
+    @Column(name = "thumbnail_path", length = 1000)
+    private String thumbnailPath;
 
     @BatchSize(size = 100)
     @ManyToMany
@@ -83,7 +83,7 @@ public class Post extends BaseTimeEntity {
     // === 생성자 === //
     @Builder
     public Post(User user, PostType postType, String title, String slug, String excerpt,
-                String content, PostStatus status, String thumbnailUrl) {
+                String content, PostStatus status, String thumbnailPath) {
         this.user = user;
         this.postType = postType;
         this.title = title;
@@ -91,7 +91,7 @@ public class Post extends BaseTimeEntity {
         this.excerpt = excerpt;
         this.content = content;
         this.status = status != null ? status : PostStatus.DELETED;
-        this.thumbnailUrl = thumbnailUrl;
+        this.thumbnailPath = thumbnailPath;
     }
 
     // === 비즈니스 로직 === //
@@ -182,20 +182,20 @@ public class Post extends BaseTimeEntity {
      * 썸네일 URL 업데이트
      */
     public void updateThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
+        this.thumbnailPath = thumbnailUrl;
     }
 
     /**
      * 썸네일 제거
      */
     public void removeThumbnail() {
-        this.thumbnailUrl = null;
+        this.thumbnailPath = null;
     }
 
     /**
      * 썸네일 존재 여부 확인
      */
     public boolean hasThumbnail() {
-        return this.thumbnailUrl != null && !this.thumbnailUrl.isBlank();
+        return this.thumbnailPath != null && !this.thumbnailPath.isBlank();
     }
 }

@@ -1,6 +1,6 @@
-package com.blog.backend.feature.auth.service;
+package com.blog.backend.feature.user.service;
 
-import com.blog.backend.feature.auth.dto.AuthRequest;
+import com.blog.backend.feature.user.dto.AuthRequest;
 import com.blog.backend.feature.user.entity.User;
 import com.blog.backend.global.core.exception.CustomException;
 

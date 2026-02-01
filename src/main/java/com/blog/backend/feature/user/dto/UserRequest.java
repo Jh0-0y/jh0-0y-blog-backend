@@ -20,8 +20,13 @@ public class UserRequest {
 
         @Size(min = 2, max = 20, message = "닉네임은 2~20자로 입력해주세요")
         private String nickname;
+        @Size(max = 50, message = "포지션은 50글자 이내로 입력해주세요")
+        private String position;
+        @Size(max = 500, message = "소개는 500자 이내로 입력해주세요.")
+        private String about;
         private Long profileImageId;
-        private String profileImageUrl;
+        private String profileImagePath;
+        private Boolean removeProfileImage;
     }
 
     /**

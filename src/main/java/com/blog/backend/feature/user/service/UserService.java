@@ -17,7 +17,7 @@ public interface UserService {
     /**
      * 프로필 정보 수정 (닉네임 및/또는 프로필 이미지)
      * @param userId 사용자 ID
-     * @param request 프로필 수정 요청 DTO (닉네임, fileId, profileUrl)
+     * @param request 프로필 수정 요청 DTO (닉네임, fileId, profileImagePath)
      * @return 수정된 사용자 정보
      * @throws CustomException 사용자를 찾을 수 없는 경우 (NOT_FOUND)
      * @throws CustomException 닉네임이 이미 존재하는 경우 (CONFLICT)
@@ -37,4 +37,12 @@ public interface UserService {
      * @throws CustomException 새 비밀번호 확인이 일치하지 않는 경우 (BAD_REQUEST)
      */
     void changePassword(Long userId, UserRequest.ChangePasswordRequest request);
+
+    /**
+     * 현재 조회한 블로그 사용자 조회
+     * @param nickname 사용자 닉네임
+     * @return 닉네임, 프로필 이미지
+     * @throws CustomException 사용자를 찾을 수 없는 경우 (NOT_FOUND)
+     */
+    UserResponse.BlogUserInfo getBlogUser(String nickname);
 }

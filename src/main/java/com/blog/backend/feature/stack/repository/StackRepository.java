@@ -2,6 +2,7 @@ package com.blog.backend.feature.stack.repository;
 
 import com.blog.backend.feature.stack.entity.Stack;
 import com.blog.backend.feature.stack.entity.StackGroup;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -53,6 +54,22 @@ public interface StackRepository extends JpaRepository<Stack, Long> {
     List<Object[]> findStacksWithPublicPostCount();
 
     /**
+     * 특정 사용자의 공개 게시글에 사용된 스택 목록 조회 (게시글 수 포함)
+     * - 사용자별 필터링용
+     *
+     * @param nickname 사용자 닉네임
+     * @return 스택별 해당 사용자의 공개 게시글 수 (Object[]: Stack, count)
+     */
+    @Query("SELECT s, COUNT(p) as postCount " +
+            "FROM Stack s " +
+            "JOIN s.posts p " +
+            "WHERE p.status = 'PUBLISHED' " +
+            "AND p.user.nickname = :nickname " +
+            "GROUP BY s " +
+            "ORDER BY postCount DESC")
+    List<Object[]> findStacksWithPublicPostCountByUser(@Param("nickname") String nickname);
+
+    /**
      * 인기 스택 조회 (상위 N개)
      * - 공개 게시글 기준
      *
@@ -75,4 +92,9 @@ public interface StackRepository extends JpaRepository<Stack, Long> {
      * @return 존재 여부
      */
     boolean existsByName(String name);
+
+    /**
+     * 스택명 부분 일치 검색
+     */
+    List<Stack> findByNameContainingIgnoreCaseOrderByNameAsc(String keyword, Pageable pageable);
 }

@@ -1,6 +1,5 @@
 package com.blog.backend.feature.post.dto;
 
-import com.blog.backend.feature.post.entity.PostStatus;
 import com.blog.backend.feature.post.entity.PostType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -41,7 +40,7 @@ public class PostRequest {
 
         private Long thumbnailFileId;
 
-        private String thumbnailUrl;
+        private String thumbnailPath;
 
         private List<String> tags;
 
@@ -75,7 +74,7 @@ public class PostRequest {
 
         private Long thumbnailFileId;
 
-        private String thumbnailUrl;
+        private String thumbnailPath;
 
         private Boolean removeThumbnail;
 

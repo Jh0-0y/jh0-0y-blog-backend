@@ -3,7 +3,9 @@ package com.blog.backend.feature.user.repository;
 import com.blog.backend.feature.user.entity.UserFile;
 import com.blog.backend.feature.user.entity.UserFileType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,4 +38,12 @@ public interface UserFileRepository extends JpaRepository<UserFile, Long> {
      * @param fileType 파일 타입 (PROFILE)
      */
     void deleteByUserIdAndFileType(Long userId, UserFileType fileType);
+
+    /**
+     * 사용 중인 모든 파일 ID 조회 (스케줄러용)
+     *
+     * @return 파일 ID 목록
+     */
+    @Query("SELECT uf.fileId FROM UserFile uf")
+    List<Long> findAllUsedFileIds();
 }

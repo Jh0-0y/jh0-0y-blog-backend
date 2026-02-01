@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  * 마크다운 본문에서 파일 참조를 파싱하는 유틸리티
  *
  * 지원하는 커스텀 된 마크다운 형식:
- * ::file[id=123 url=... fileName=... size=... contentType=...]::
+ * ::file[id=123 path=... fileName=... size=... contentType=...]::
  *
  * 역할:
  * - 본문에서 사용 중인 파일 ID 추출
@@ -35,7 +35,7 @@ public class MarkdownFileParser {
      * 3. Set으로 중복 제거 후 반환
      *
      * 예시:
-     * content = "::file[id=1 url=...]::\n::file[id=2 url=...]::\ n::file[id=1 url=...]::"
+     * content = "::file[id=1 path=...]::\n::file[id=2 path=...]::\ n::file[id=1 path=...]::"
      * → {1, 2} 반환 (중복 제거)
      *
      * @param content 마크다운 본문 (null 가능)

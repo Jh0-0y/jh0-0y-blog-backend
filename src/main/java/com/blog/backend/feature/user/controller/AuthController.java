@@ -1,7 +1,7 @@
-package com.blog.backend.feature.auth.controller;
+package com.blog.backend.feature.user.controller;
 
-import com.blog.backend.feature.auth.dto.AuthRequest;
-import com.blog.backend.feature.auth.service.AuthService;
+import com.blog.backend.feature.user.dto.AuthRequest;
+import com.blog.backend.feature.user.service.AuthService;
 import com.blog.backend.feature.user.entity.User;
 import com.blog.backend.global.core.response.ApiResponse;
 import com.blog.backend.global.core.exception.CustomException;
@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,25 +29,6 @@ public class AuthController {
     private final CookieUtil cookieUtil;
 
     /**
-     * 회원가입
-     * POST /api/auth/signup
-     */
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<UserResponse.UserInfo>> signUp(
-            @Valid @RequestBody AuthRequest.SignUpRequest request,
-            HttpServletResponse response
-    ) {
-        User user = authService.signUp(request);
-
-        // 토큰 생성 및 쿠키 설정
-        setTokenCookies(response, user);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(UserResponse.UserInfo.from(user), "회원가입이 완료되었습니다"));
-    }
-
-    /**
      * 로그인
      * POST /api/auth/login
      */
@@ -59,7 +39,6 @@ public class AuthController {
     ) {
         User user = authService.login(request);
 
-        // 토큰 생성 및 쿠키 설정
         setTokenCookies(response, user);
 
         return ResponseEntity.ok(ApiResponse.success(UserResponse.UserInfo.from(user), "로그인 성공"));

@@ -43,8 +43,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart(required = false) @Valid UserRequest.UpdateProfileRequest request
     ) {
-        if ((request == null || request.getNickname() == null || request.getNickname().isBlank())
-                && (request.getProfileImageUrl() == null || request.getProfileImageUrl().isEmpty())) {
+        if ((request == null || request.getNickname() == null || request.getNickname().isBlank())) {
             throw CustomException.badRequest("수정할 정보를 입력해주세요");
         }
 

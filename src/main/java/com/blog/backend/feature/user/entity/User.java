@@ -3,6 +3,7 @@ package com.blog.backend.feature.user.entity;
 import com.blog.backend.feature.post.entity.Post;
 import com.blog.backend.global.core.entity.BaseTimeEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -25,22 +26,32 @@ public class User extends BaseTimeEntity {
     private String password;
 
     @Column(nullable = false, length = 30)
+    private String name;
+
+    @Column(nullable = false, length = 30)
     private String nickname;
+
+    @Column(length = 50)
+    private String position;
+
+    @Column(length = 500)
+    private String about;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserRole role;
 
     @Column(length = 1000)
-    private String profileImageUrl;
+    private String profileImagePath;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Post> posts = new ArrayList<>();
 
     @Builder
-    public User(String email, String password, String nickname, UserRole role) {
+    public User(String email, String password, String name, String nickname, UserRole role) {
         this.email = email;
         this.password = password;
+        this.name = name;
         this.nickname = nickname;
         this.role = role != null ? role : UserRole.USER;
     }
@@ -53,7 +64,19 @@ public class User extends BaseTimeEntity {
         this.password = password;
     }
 
-    public void updateProfileImageUrl(String profileImageUrl) {
-        this.profileImageUrl = profileImageUrl;
+    public void updateProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
+    }
+
+    public void updatePosition(String position) {
+        this.position = position;
+    }
+
+    public void updateAbout(String about) {
+        this.about = about;
+    }
+
+    public void removeProfileImage() {
+        this.profileImagePath = null;
     }
 }

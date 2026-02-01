@@ -5,8 +5,7 @@ import lombok.Builder;
 @Builder
 public record S3UploadResult(
         String originalName,
-        String s3Key,
-        String url,
+        String path,
         String contentType,
         long fileSize
 ) {

@@ -1,14 +1,13 @@
-package com.blog.backend.feature.auth.service;
+package com.blog.backend.feature.user.service;
 
-import com.blog.backend.feature.auth.dto.AuthRequest;
+import com.blog.backend.feature.user.dto.AuthRequest;
 import com.blog.backend.feature.user.entity.User;
 import com.blog.backend.feature.user.entity.UserRole;
 import com.blog.backend.feature.user.repository.UserFileRepository;
 import com.blog.backend.feature.user.repository.UserRepository;
-import com.blog.backend.feature.user.service.UserValidatorService;
 import com.blog.backend.global.file.repository.FileMetadataRepository;
 import com.blog.backend.global.core.exception.CustomException;
-import com.blog.backend.infra.s3.service.S3FileService;
+import com.blog.backend.infra.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +24,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserFileRepository userFileRepository;
     private final FileMetadataRepository fileMetadataRepository;
     private final PasswordEncoder passwordEncoder;
-    private final S3FileService s3FileService;
+    private final S3Service s3Service;
     private final UserValidatorService userValidatorService;
 
     @Override
@@ -41,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
                 .nickname(request.getNickname())
                 .role(UserRole.USER)
                 .build();

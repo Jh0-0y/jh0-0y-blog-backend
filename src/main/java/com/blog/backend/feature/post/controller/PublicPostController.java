@@ -14,6 +14,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 공개 게시글 컨트롤러 (인증 불필요)
  *
@@ -21,30 +23,32 @@ import org.springframework.web.bind.annotation.*;
  * - PUBLISHED 상태의 게시글만 조회 가능
  */
 @RestController
-@RequestMapping("/api/public/posts")
+@RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class PublicPostController {
 
     private final PublicPostService publicPostService;
 
     /**
-     * 게시글 상세 조회 (Slug 기반)
-     * GET /api/public/posts/{slug}
+     * 게시글 상세 조회 (Nickname + Slug 기반)
+     * GET /api/posts/{nickname}/{slug}
      *
+     * @param nickname 작성자 닉네임
      * @param slug 게시글 slug
      * @return 게시글 상세 정보 (관련 게시글 포함)
      */
-    @GetMapping("/{slug}")
-    public ResponseEntity<ApiResponse<PostResponse.Detail>> getPostBySlug(
+    @GetMapping("/{nickname}/{slug}")
+    public ResponseEntity<ApiResponse<PostResponse.Detail>> getPostByNicknameAndSlug(
+            @PathVariable String nickname,
             @PathVariable String slug
     ) {
-        PostResponse.Detail response = publicPostService.getPostBySlug(slug);
+        PostResponse.Detail response = publicPostService.getPostByNicknameAndSlug(nickname, slug);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
      * 공개 게시글 검색 (복합 필터링)
-     * GET /api/public/posts
+     * GET /api/posts
      *
      * 쿼리 파라미터:
      * - postType: 게시글 타입 (선택)
@@ -67,8 +71,14 @@ public class PublicPostController {
     }
 
     /**
-     * 특정 사용자의 공개된 게시글 조회
-     * GET /api/public/posts/user/{nickname}
+     * 특정 사용자의 공개된 게시글 조회 (복합 필터링)
+     * GET /api/posts/user/{nickname}
+     *
+     * 쿼리 파라미터:
+     * - postType: 게시글 타입 (선택)
+     * - stack: 스택명 (선택)
+     * - keyword: 검색어 (선택) - 제목, 요약에서 검색
+     * - page, size, sort
      *
      * @param nickname 사용자 닉네임
      * @return 해당 사용자의 공개 게시글 목록
@@ -76,9 +86,32 @@ public class PublicPostController {
     @GetMapping("/user/{nickname}")
     public ResponseEntity<ApiResponse<PageResponse<PostResponse.PostItems>>> getUserPublicPosts(
             @PathVariable String nickname,
+            @RequestParam(required = false) PostType postType,
+            @RequestParam(required = false) String stack,
+            @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<PostResponse.PostItems> posts = publicPostService.getUserPublicPosts(nickname, pageable);
+        PostSearchCondition condition = PostSearchCondition.ofUser(nickname, postType, stack, keyword);
+        Page<PostResponse.PostItems> posts = publicPostService.searchPosts(condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(posts)));
+    }
+
+    /**
+     * 게시글 자동완성 검색
+     * GET /api/posts/autocomplete?keyword=검색어
+     *
+     * - 제목 우선 매칭 후 부족하면 설명에서 추가
+     * - PUBLISHED 상태만 검색
+     * - 최대 10개 반환
+     *
+     * @param keyword 검색 키워드
+     * @return 검색된 게시글 목록
+     */
+    @GetMapping("/autocomplete")
+    public ResponseEntity<ApiResponse<List<PostResponse.PostItems>>> autocomplete(
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+        List<PostResponse.PostItems> results = publicPostService.autocomplete(keyword);
+        return ResponseEntity.ok(ApiResponse.success(results));
     }
 }

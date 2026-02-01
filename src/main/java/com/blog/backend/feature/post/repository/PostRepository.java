@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
@@ -152,4 +153,53 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             "AND p.deletedAt IS NOT NULL " +
             "AND p.deletedAt < :deletedBefore")
     List<Post> findPostsToHardDelete(@Param("deletedBefore") LocalDateTime deletedBefore);
+
+    // ========== 자동완성 검색용 ========== //
+
+    /**
+     * 제목 부분 일치 검색 (PUBLISHED만)
+     */
+    @Query("SELECT p FROM Post p " +
+            "LEFT JOIN FETCH p.stacks " +
+            "LEFT JOIN FETCH p.tags " +
+            "LEFT JOIN FETCH p.user " +
+            "WHERE p.status = 'PUBLISHED' " +
+            "AND p.title LIKE %:keyword% " +
+            "ORDER BY p.createdAt DESC")
+    List<Post> findByTitleContainingAndPublished(
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    /**
+     * 설명 부분 일치 검색 (PUBLISHED만)
+     */
+    @Query("SELECT p FROM Post p " +
+            "LEFT JOIN FETCH p.stacks " +
+            "LEFT JOIN FETCH p.tags " +
+            "LEFT JOIN FETCH p.user " +
+            "WHERE p.status = 'PUBLISHED' " +
+            "AND p.excerpt LIKE %:keyword% " +
+            "ORDER BY p.createdAt DESC")
+    List<Post> findByExcerptContainingAndPublished(
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    /**
+     * 설명 부분 일치 검색 - 특정 ID 제외 (PUBLISHED만)
+     */
+    @Query("SELECT p FROM Post p " +
+            "LEFT JOIN FETCH p.stacks " +
+            "LEFT JOIN FETCH p.tags " +
+            "LEFT JOIN FETCH p.user " +
+            "WHERE p.status = 'PUBLISHED' " +
+            "AND p.excerpt LIKE %:keyword% " +
+            "AND p.id NOT IN :excludeIds " +
+            "ORDER BY p.createdAt DESC")
+    List<Post> findByExcerptContainingAndPublishedExcluding(
+            @Param("keyword") String keyword,
+            @Param("excludeIds") Set<Long> excludeIds,
+            Pageable pageable
+    );
 }

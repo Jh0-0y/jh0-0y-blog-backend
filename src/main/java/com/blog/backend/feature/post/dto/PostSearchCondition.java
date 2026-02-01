@@ -16,12 +16,25 @@ public class PostSearchCondition {
     private PostType postType;
     private String stackName;
     private String keyword;
+    private String nickname;  // 작성자 닉네임 필터
 
     /**
      * 공개 게시글 검색 조건 생성
      */
     public static PostSearchCondition ofPublic(PostType postType, String stackName, String keyword) {
         return PostSearchCondition.builder()
+                .postType(postType)
+                .stackName(stackName)
+                .keyword(keyword)
+                .build();
+    }
+
+    /**
+     * 특정 사용자의 공개 게시글 검색 조건 생성
+     */
+    public static PostSearchCondition ofUser(String nickname, PostType postType, String stackName, String keyword) {
+        return PostSearchCondition.builder()
+                .nickname(nickname)
                 .postType(postType)
                 .stackName(stackName)
                 .keyword(keyword)

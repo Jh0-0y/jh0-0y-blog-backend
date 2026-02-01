@@ -36,14 +36,13 @@ public class FileMetadataServiceImpl implements FileMetadataService {
     public FileMetadata saveFileMetadata(S3UploadResult uploadResult) {
         FileMetadata fileMetadata = FileMetadata.builder()
                 .originalName(uploadResult.originalName())
-                .s3Key(uploadResult.s3Key())
-                .url(uploadResult.url())
+                .path(uploadResult.path())
                 .contentType(uploadResult.contentType())
                 .size(uploadResult.fileSize())
                 .build();
 
         FileMetadata saved = fileMetadataRepository.save(fileMetadata);
-        log.info("파일 메타데이터 저장 완료: fileId={}, s3Key={}", saved.getId(), saved.getS3Key());
+        log.info("파일 메타데이터 저장 완료: fileId={}, path={}", saved.getId(), saved.getPath());
 
         return saved;
     }

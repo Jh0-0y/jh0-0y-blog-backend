@@ -1,18 +1,19 @@
 package com.blog.backend.feature.stack.controller;
 
 import com.blog.backend.feature.stack.dto.StackResponse;
-import com.blog.backend.feature.stack.dto.StackRequest;
-import com.blog.backend.feature.stack.entity.StackGroup;
 import com.blog.backend.feature.stack.service.StackService;
 import com.blog.backend.global.core.response.ApiResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 공개 스택 컨트롤러
+ *
+ * 스택 조회 API (인증 불필요)
+ */
 @RestController
 @RequestMapping("/api/stacks")
 @RequiredArgsConstructor
@@ -21,79 +22,25 @@ public class StackController {
     private final StackService stackService;
 
     /**
-     * 스택 생성
-     * POST /api/stacks
-     */
-    @PostMapping
-    public ResponseEntity<ApiResponse<StackResponse.Response>> createStack(
-            @Valid @RequestBody StackRequest.Create request
-    ) {
-        StackResponse.Response response = stackService.createStack(request);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "스택이 생성되었습니다"));
-    }
-
-    /**
-     * 스택 수정
-     * PUT /api/stacks/{stackId}
-     */
-    @PutMapping("/{stackId}")
-    public ResponseEntity<ApiResponse<StackResponse.Response>> updateStack(
-            @PathVariable Long stackId,
-            @Valid @RequestBody StackRequest.Update request
-    ) {
-        StackResponse.Response response = stackService.updateStack(stackId, request);
-        return ResponseEntity.ok(ApiResponse.success(response, "스택이 수정되었습니다"));
-    }
-
-    /**
-     * 스택 삭제
-     * DELETE /api/stacks/{stackId}
-     */
-    @DeleteMapping("/{stackId}")
-    public ResponseEntity<ApiResponse<Void>> deleteStack(
-            @PathVariable Long stackId
-    ) {
-        stackService.deleteStack(stackId);
-        return ResponseEntity.ok(ApiResponse.success(null, "스택이 삭제되었습니다"));
-    }
-
-    /**
-     * 전체 스택 목록 조회
+     * 전체 스택 목록 조회 (게시글 작성용)
      * GET /api/stacks
+     *
+     * - DB에 등록된 모든 스택 반환
+     * - 그룹 정보 포함
+     * - 게시글 수와 무관
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<StackResponse.Response>>> getAllStacks() {
-        List<StackResponse.Response> stacks = stackService.getAllStacks();
+    public ResponseEntity<ApiResponse<List<StackResponse.StackItem>>> getAllStacks() {
+        List<StackResponse.StackItem> stacks = stackService.getAllStacks();
         return ResponseEntity.ok(ApiResponse.success(stacks));
     }
 
     /**
-     * 그룹별 스택 목록 조회
-     * GET /api/stacks/group/{stackGroup}
-     */
-    @GetMapping("/group/{stackGroup}")
-    public ResponseEntity<ApiResponse<List<StackResponse.Response>>> getStacksByGroup(
-            @PathVariable StackGroup stackGroup
-    ) {
-        List<StackResponse.Response> stacks = stackService.getStacksByGroup(stackGroup);
-        return ResponseEntity.ok(ApiResponse.success(stacks));
-    }
-
-    /**
-     * 스택 + 게시글 수 목록 조회 (사이드바용)
-     * GET /api/stacks/with-count
-     */
-    @GetMapping("/with-count")
-    public ResponseEntity<ApiResponse<List<StackResponse.StackWithCount>>> getStacksWithPostCount() {
-        List<StackResponse.StackWithCount> stacks = stackService.getStacksWithPostCount();
-        return ResponseEntity.ok(ApiResponse.success(stacks));
-    }
-
-    /**
-     * 그룹별 스택 + 게시글 수 목록 조회 (사이드바 All stacks용)
+     * 그룹별 스택 목록 조회 - 전체 (게시글 필터링용)
      * GET /api/stacks/grouped
+     *
+     * - 실제 사용 중인 스택만 반환
+     * - 게시글 수 포함
      */
     @GetMapping("/grouped")
     public ResponseEntity<ApiResponse<StackResponse.GroupedStacks>> getGroupedStacks() {
@@ -102,7 +49,22 @@ public class StackController {
     }
 
     /**
-     * 인기 스택 조회 (사이드바 Popular Stacks용)
+     * 그룹별 스택 목록 조회 - 사용자별 (게시글 필터링용)
+     * GET /api/stacks/grouped/user/{nickname}
+     *
+     * - 해당 사용자가 실제 사용 중인 스택만 반환
+     * - 게시글 수 포함
+     */
+    @GetMapping("/grouped/user/{nickname}")
+    public ResponseEntity<ApiResponse<StackResponse.GroupedStacks>> getGroupedStacksByUser(
+            @PathVariable String nickname
+    ) {
+        StackResponse.GroupedStacks groupedStacks = stackService.getGroupedStacksWithPostCountByUser(nickname);
+        return ResponseEntity.ok(ApiResponse.success(groupedStacks));
+    }
+
+    /**
+     * 인기 스택 조회 (사이드바용)
      * GET /api/stacks/popular?limit=5
      */
     @GetMapping("/popular")
@@ -111,5 +73,20 @@ public class StackController {
     ) {
         List<StackResponse.PopularStack> popularStacks = stackService.getPopularStacks(limit);
         return ResponseEntity.ok(ApiResponse.success(popularStacks));
+    }
+
+    /**
+     * 스택 자동완성 검색
+     * GET /api/stacks/autocomplete?keyword=ja
+     *
+     * @param keyword 검색 키워드
+     * @return 검색된 스택 목록 (최대 5개)
+     */
+    @GetMapping("/autocomplete")
+    public ResponseEntity<ApiResponse<List<StackResponse.StackItem>>> autocomplete(
+            @RequestParam(required = false, defaultValue = "") String keyword
+    ) {
+        List<StackResponse.StackItem> results = stackService.autocomplete(keyword);
+        return ResponseEntity.ok(ApiResponse.success(results));
     }
 }
