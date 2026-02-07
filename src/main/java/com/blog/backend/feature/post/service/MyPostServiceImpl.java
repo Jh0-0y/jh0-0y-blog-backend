@@ -9,6 +9,7 @@ import com.blog.backend.feature.post.repository.PostRepository;
 import com.blog.backend.feature.post.repository.PostSpecification;
 import com.blog.backend.feature.post.util.MarkdownFileParser;
 import com.blog.backend.feature.post.util.SlugGenerator;
+import com.blog.backend.feature.post.util.ValidateMarkdown;
 import com.blog.backend.feature.stack.entity.Stack;
 import com.blog.backend.feature.stack.repository.StackRepository;
 import com.blog.backend.feature.user.entity.User;
@@ -46,6 +47,9 @@ public class MyPostServiceImpl implements MyPostService{
     @Transactional
     public PostResponse.Detail createPost(User user, PostRequest.Create request) {
         validateTitleForCreate(request.getTitle());
+
+        // 본문 마크다운 형식 검증
+        ValidateMarkdown.validate(request.getContent());
 
         // Slug 생성 (중복 처리 포함)
         String slug = generateUniqueSlug(request.getTitle());
@@ -121,6 +125,9 @@ public class MyPostServiceImpl implements MyPostService{
     public PostResponse.Detail updatePost(Long userId, String slug, PostRequest.Update request) {
         Post post = postRepository.findBySlugAndUserId(slug, userId)
                 .orElseThrow(() -> CustomException.notFound("게시글을 찾을 수 없습니다"));
+
+        // 본문 마크다운 형식 검증
+        ValidateMarkdown.validate(request.getContent());
 
         // 제목이 변경될 경우에만 중복 체크 및 slug 재생성
         String newSlug = post.getSlug();

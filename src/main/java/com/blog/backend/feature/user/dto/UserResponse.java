@@ -47,11 +47,15 @@ public class UserResponse {
 
         private String nickname;
         private String profileImagePath;
+        private String position;
+        private String about;
 
         public static BlogUserInfo from(User user) {
             return BlogUserInfo.builder()
                     .nickname(user.getNickname())
                     .profileImagePath(user.getProfileImagePath())
+                    .position(user.getPosition())
+                    .about(user.getAbout())
                     .build();
         }
     }
