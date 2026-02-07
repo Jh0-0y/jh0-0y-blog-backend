@@ -93,11 +93,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 허용할 Origin (프론트엔드 주소)
-        configuration.setAllowedOrigins(List.of(
-                frontOrigin,                // frontend origin
-                "http://localhost:5173",    // Vite 개발 서버
-                "http://localhost:3000"     // React 개발 서버
-        ));
+        configuration.setAllowedOrigins(List.of(frontOrigin));
         // 허용할 HTTP 메서드
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
